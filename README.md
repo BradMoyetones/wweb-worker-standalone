@@ -42,6 +42,9 @@ Bot automatizado de WhatsApp que monitorea y reporta el número de visitantes en
    # URL de la API para obtener el número de visitantes
    API_URL='https://example.com/api/endpoint'
 
+   # URL de la API para iniciar sesión
+   API_LOGIN_URL='https://example.com/api/login'
+
    # Zona horaria (opcional, ej: 'America/Bogota')
    TZ='America/Bogota'
 
@@ -63,7 +66,7 @@ Bot automatizado de WhatsApp que monitorea y reporta el número de visitantes en
 |----------|-------------|---------|-----------|
 | `GROUP_NAME` | Nombre exacto del grupo de WhatsApp donde se enviarán los mensajes | `'Equipo de Trabajo'` | ✅ Sí |
 | `API_URL` | URL completa del endpoint de la API | `'https://example.com/...'` | ✅ Sí |
-| `API_URL` | URL completa del endpoint de la API para iniciar sesión | `'https://example.com/...'` | ✅ Sí |
+| `API_LOGIN_URL` | URL completa del endpoint de la API para iniciar sesión | `'https://example.com/...'` | ✅ Sí |
 | `TZ` | Zona horaria para los logs y timestamps | `'America/Bogota'` | ⚠️ Opcional |
 | `PJD_USER` | Usuario para autenticación en la API | `'admin'` | ✅ Sí |
 | `PJD_PASS` | Contraseña para autenticación en la API | `'password123'` | ✅ Sí |
