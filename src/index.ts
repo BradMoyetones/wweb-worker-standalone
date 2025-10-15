@@ -1,60 +1,9 @@
-require('dotenv').config();
-const { Client, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
+import dotenv from 'dotenv';
+import qrcode from 'qrcode-terminal';
+import { Client, LocalAuth, type Message } from 'whatsapp-web.js';
+import { getCurrentTimeWithEmoji } from './utils/helpers';
 
-function getCurrentTime() {
-    const now = new Date();
-
-    let hours = now.getHours();
-    const minutes = now.getMinutes().toString().padStart(2, "0");
-    const ampm = hours >= 12 ? "PM" : "AM";
-
-    // convertir a formato 12h
-    hours = hours % 12;
-    hours = hours ? hours : 12; // el 0 se convierte en 12
-
-    return `${hours.toString().padStart(2, "0")}:${minutes} ${ampm}`;
-}
-
-function getCurrentTimeWithEmoji() {
-    const now = new Date();
-
-    let hours = now.getHours();
-    let minutes = now.getMinutes();
-    const ampm = hours >= 12 ? "PM" : "AM";
-
-    // convertir a 12h
-    let displayHour = hours % 12;
-    displayHour = displayHour ? displayHour : 12;
-
-    // formato HH:MM
-    const formattedTime = `${displayHour.toString().padStart(2, "0")}:${minutes
-        .toString()
-        .padStart(2, "0")} ${ampm}`;
-
-    // --- Mapeo de emojis ---
-    const emojis = {
-        "1:00": "🕐", "1:30": "🕜",
-        "2:00": "🕑", "2:30": "🕝",
-        "3:00": "🕒", "3:30": "🕞",
-        "4:00": "🕓", "4:30": "🕟",
-        "5:00": "🕔", "5:30": "🕠",
-        "6:00": "🕕", "6:30": "🕡",
-        "7:00": "🕖", "7:30": "🕢",
-        "8:00": "🕗", "8:30": "🕣",
-        "9:00": "🕘", "9:30": "🕤",
-        "10:00": "🕙", "10:30": "🕥",
-        "11:00": "🕚", "11:30": "🕦",
-        "12:00": "🕛", "12:30": "🕧"
-    };
-
-    // decidir si redondear a la hora o media hora
-    const closestMinutes = minutes < 30 ? "00" : "30";
-    const key = `${displayHour}:${closestMinutes}`;
-    const emoji = emojis[key];
-
-    return `${formattedTime} ${emoji}`;
-}
+dotenv.config();
 
 // --- Configurar cliente con sesión persistente (carpeta .wwebjs_auth) ---
 const client = new Client({
@@ -66,7 +15,7 @@ const client = new Client({
 });
 
 // --- Utilidad: buscar ID de grupo por nombre ---
-async function getGroupIdByName(name) {
+async function getGroupIdByName(name: string) {
     const chats = await client.getChats();
     const group = chats.find(c => c.isGroup && c.name === name);
     if (!group) throw new Error(`No encontré el grupo con nombre: ${name}`);
@@ -74,18 +23,18 @@ async function getGroupIdByName(name) {
 }
 
 // --- Utilidad: enviar mensaje a grupo por nombre ---
-async function sendToGroupByName(groupName, message) {
+async function sendToGroupByName(groupName: string, message: string) {
     const chatId = await getGroupIdByName(groupName);
     return client.sendMessage(chatId, message);
 }
 
 // --- Comandos del bot (prefijo "!") ---
-async function handleCommand(msg) {
+async function handleCommand(msg: Message) {
     const text = (msg.body || '').trim();
     if (!text.startsWith('!')) return;
 
     const [rawCmd, ...rest] = text.slice(1).split(/\s+/);
-    const cmd = rawCmd.toLowerCase();
+    const cmd = rawCmd?.toLowerCase();
     const args = rest;
 
     try {
@@ -144,10 +93,17 @@ client.on('ready', async () => {
         // await sendToGroupByName(process.env.GROUP_NAME, 'Bot en línea ✅');
         console.log(`Mensaje enviado a "${process.env.GROUP_NAME}".`);
     } catch (err) {
-        console.error('No se pudo enviar mensaje inicial:', err.message);
+        if (err instanceof Error) {
+            console.error('No se pudo enviar mensaje inicial:', err.message);
+        } else {
+            console.error('No se pudo enviar mensaje inicial:', err);
+        }
     }
 
-    startAutoNumberJob(process.env.START_AT || null);
+    startAutoNumberJob(
+        process.env.START_AT || null,
+        Number(process.env.INTERVAL_MINUTES) || 30
+    );
 });
 
 // --- Importante: escuchar message_create ---
@@ -165,7 +121,7 @@ client.initialize();
 
 
 // Extracción de la lógica de !numero en una función reutilizable
-async function fetchAndSendVisitorCount(msg) {
+async function fetchAndSendVisitorCount(msg?: Message) {
     try {
         // 1. Hacemos login (pero NO seguir redirect)
         const loginRes = await fetch(process.env.API_LOGIN_URL, {
@@ -230,7 +186,7 @@ async function fetchAndSendVisitorCount(msg) {
 // }
 
 // ----- Función que recibe hora de inicio y el intervalo en minutos -----
-function startAutoNumberJob(startAt, intervalMinutes = 30) {
+function startAutoNumberJob(startAt: string | null, intervalMinutes: number = 30) {
     const now = new Date();
 
     // Validar parámetro de intervalo
@@ -247,7 +203,7 @@ function startAutoNumberJob(startAt, intervalMinutes = 30) {
             if (date < now) date.setDate(date.getDate() + 1); // Si ya pasó, programa para mañana
             return date;
         })()
-        : null;
+        : null; 
 
     console.log(
         `⏰ AutoJob iniciado${
@@ -283,7 +239,7 @@ function startAutoNumberJob(startAt, intervalMinutes = 30) {
     };
 
     if (startTime) {
-        const delay = startTime - now;
+        const delay = startTime.getTime() - now.getTime();
         console.log(
             `🕓 Esperando ${(delay / 1000 / 60).toFixed(1)} minutos para activar el AutoJob (a las ${startTime.toLocaleTimeString()})...`
         );

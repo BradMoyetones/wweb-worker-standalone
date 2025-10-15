@@ -56,6 +56,10 @@ HDN='valor_hdn'
 # Hora de inicio de envío automático (formato HH:MM en 24h, ej: '09:00')
 # Dejar vacío para iniciar inmediatamente
 START_AT='09:00'
+
+# Intervalo de minutos en que se enviará el mensaje
+# Dejar vacio para enviar cada 30 minutos
+INTERVAL_MINUTES=30
 ```
 
 ## 🔧 Configuración
@@ -72,12 +76,18 @@ START_AT='09:00'
 | `PJD_PASS` | Contraseña para autenticación en la API | `'password123'` | ✅ Sí |
 | `HDN` | Valor del campo oculto requerido por el formulario de login | `'1'` | ✅ Sí |
 | `START_AT` | Hora de inicio del envío automático (formato 24h: HH:MM) | `'09:00'` | ⚠️ Opcional |
+| `INTERVAL_MINUTES` | Intervalo de minutos en que se enviará el mensaje | `'30'` | ⚠️ Opcional |
 
 ### Notas sobre START_AT
 
 - Si defines `START_AT='09:00'`, el bot esperará hasta las 9:00 AM para comenzar los envíos automáticos
 - Si dejas `START_AT` vacío o no lo defines, el bot comenzará a enviar mensajes inmediatamente
 - Una vez iniciado, enviará mensajes cada hora en punto (:00) y cada media hora (:30)
+
+### Notas sobre INTERVAL_MINUTES
+
+- Si defines `INTERVAL_MINUTES='30'`, el bot esperará 30 minutos para cada envio
+- Si dejas `INTERVAL_MINUTES` vacío o no lo defines, el bot enviara el mensaje cada 30 minutos por defecto
 
 ## 🎮 Uso
 
@@ -176,7 +186,7 @@ El bot enviará automáticamente el número de visitantes al grupo configurado:
 
 ### Los mensajes automáticos no se envían
 
-- Verifica que `START_AT` tenga el formato correcto (HH:MM)
+- Verifica que `START_AT` o `INTERVAL_MINUTES` tengan el formato correcto (HH:MM) y (NUMBER)
 - Revisa los logs de la consola para ver si hay errores
 - Confirma que el bot esté conectado y activo
 
