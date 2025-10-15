@@ -160,7 +160,7 @@ async function fetchAndSendVisitorCount(msg?: Message) {
         console.log(`✅ Enviado automáticamente: ${message}`);
     } catch (err) {
         console.error("Error obteniendo número:", err);
-        // await msg.reply("❌ No se pudo obtener el número de visitantes.");
+        await msg?.reply("❌ No se pudo obtener el número de visitantes.");
     }
 }
 
