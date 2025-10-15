@@ -168,7 +168,7 @@ client.initialize();
 async function fetchAndSendVisitorCount(msg) {
     try {
         // 1. Hacemos login (pero NO seguir redirect)
-        const loginRes = await fetch("https://secure.parquejaimeduque.com/login.asp", {
+        const loginRes = await fetch(process.env.API_LOGIN_URL, {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             redirect: "manual",
