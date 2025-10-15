@@ -22,8 +22,8 @@ Bot automatizado de WhatsApp que monitorea y reporta el número de visitantes en
 
 1. **Clona el repositorio**
 ```bash
-   git clone <tu-repositorio>
-   cd <nombre-del-proyecto>
+   git clone https://github.com/BradMoyetones/wweb-worker-standalone.git
+   cd wweb-worker-standalone
 ```
 
 2. **Instala las dependencias**
