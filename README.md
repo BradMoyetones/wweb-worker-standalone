@@ -21,21 +21,21 @@ Bot automatizado de WhatsApp que monitorea y reporta el número de visitantes en
 ## 🚀 Instalación
 
 1. **Clona el repositorio**
-   \`\`\`bash
+```bash
    git clone <tu-repositorio>
    cd <nombre-del-proyecto>
-   \`\`\`
+```
 
 2. **Instala las dependencias**
-   \`\`\`bash
+```bash
    npm install
-   \`\`\`
+```
 
 3. **Configura las variables de entorno**
    
    Crea un archivo `.env` en la raíz del proyecto con las siguientes variables:
 
-   \`\`\`env
+```env
    # Nombre del grupo de WhatsApp donde se enviarán los mensajes
    GROUP_NAME='Nombre de tu grupo'
 
@@ -53,7 +53,7 @@ Bot automatizado de WhatsApp que monitorea y reporta el número de visitantes en
    # Hora de inicio de envío automático (formato HH:MM en 24h, ej: '09:00')
    # Dejar vacío para iniciar inmediatamente
    START_AT='09:00'
-   \`\`\`
+```
 
 ## 🔧 Configuración
 
@@ -80,15 +80,15 @@ Bot automatizado de WhatsApp que monitorea y reporta el número de visitantes en
 
 ### Iniciar el Bot
 
-\`\`\`bash
+```bash
 npm start
-\`\`\`
+```
 
 o
 
-\`\`\`bash
+```bash
 node index.js
-\`\`\`
+```
 
 ### Primera Ejecución
 
@@ -112,7 +112,7 @@ Todos los comandos deben escribirse en el chat con el prefijo `!`:
 
 ### Ejemplos de Uso
 
-\`\`\`
+```
 Usuario: !ping
 Bot: pong 🏓
 
@@ -121,7 +121,7 @@ Bot: 02:30 PM 🕝 / *1,234*
 
 Usuario: !say Bienvenidos al parque
 Bot: Bienvenidos al parque
-\`\`\`
+```
 
 ## 🤖 Funcionamiento Automático
 
@@ -133,7 +133,7 @@ El bot enviará automáticamente el número de visitantes al grupo configurado:
 
 ## 📁 Estructura del Proyecto
 
-\`\`\`
+```
 .
 ├── index.js              # Archivo principal del bot
 ├── .env                  # Variables de entorno (no incluir en git)
@@ -141,7 +141,7 @@ El bot enviará automáticamente el número de visitantes al grupo configurado:
 ├── package.json          # Dependencias del proyecto
 ├── .wwebjs_auth/         # Carpeta de sesión de WhatsApp (generada automáticamente)
 └── README.md             # Este archivo
-\`\`\`
+```
 
 ## 🛠️ Dependencias
 
@@ -186,7 +186,7 @@ El bot enviará automáticamente el número de visitantes al grupo configurado:
 
 ## 📝 Archivo .gitignore Recomendado
 
-\`\`\`gitignore
+```gitignore
 # Variables de entorno
 .env
 
@@ -200,7 +200,7 @@ node_modules/
 # Logs
 *.log
 npm-debug.log*
-\`\`\`
+```
 
 ## 🤝 Contribuciones
 
