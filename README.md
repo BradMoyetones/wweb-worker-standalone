@@ -36,26 +36,26 @@ Bot automatizado de WhatsApp que monitorea y reporta el número de visitantes en
    Crea un archivo `.env` en la raíz del proyecto con las siguientes variables:
 
 ```env
-   # Nombre del grupo de WhatsApp donde se enviarán los mensajes
-   GROUP_NAME='Nombre de tu grupo'
+# Nombre del grupo de WhatsApp donde se enviarán los mensajes
+GROUP_NAME='Nombre de tu grupo'
 
-   # URL de la API para obtener el número de visitantes
-   API_URL='https://example.com/api/endpoint'
+# URL de la API para obtener el número de visitantes
+API_URL='https://example.com/api/endpoint'
 
-   # URL de la API para iniciar sesión
-   API_LOGIN_URL='https://example.com/api/login'
+# URL de la API para iniciar sesión
+API_LOGIN_URL='https://example.com/api/login'
 
-   # Zona horaria (opcional, ej: 'America/Bogota')
-   TZ='America/Bogota'
+# Zona horaria (opcional, ej: 'America/Bogota')
+TZ='America/Bogota'
 
-   # Credenciales de acceso a la API
-   PJD_USER='tu_usuario'
-   PJD_PASS='tu_contraseña'
-   HDN='valor_hdn'
+# Credenciales de acceso a la API
+PJD_USER='tu_usuario'
+PJD_PASS='tu_contraseña'
+HDN='valor_hdn'
 
-   # Hora de inicio de envío automático (formato HH:MM en 24h, ej: '09:00')
-   # Dejar vacío para iniciar inmediatamente
-   START_AT='09:00'
+# Hora de inicio de envío automático (formato HH:MM en 24h, ej: '09:00')
+# Dejar vacío para iniciar inmediatamente
+START_AT='09:00'
 ```
 
 ## 🔧 Configuración
