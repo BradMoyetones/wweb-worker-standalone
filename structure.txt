@@ -1,0 +1,19 @@
+.
+├── .env
+├── .env.example
+├── .gitignore
+├── LICENSE
+├── README.md
+├── package-lock.json
+├── package.json
+├── src
+│   ├── index.ts
+│   ├── types
+│   │   ├── env.d.ts
+│   │   └── index.ts
+│   └── utils
+│       └── helpers.ts
+├── structure.txt
+└── tsconfig.json
+
+4 directories, 13 files

@@ -22,13 +22,13 @@ Bot automatizado de WhatsApp que monitorea y reporta el número de visitantes en
 
 1. **Clona el repositorio**
 ```bash
-   git clone https://github.com/BradMoyetones/wweb-worker-standalone.git
-   cd wweb-worker-standalone
+git clone https://github.com/BradMoyetones/wweb-worker-standalone.git
+cd wweb-worker-standalone
 ```
 
 2. **Instala las dependencias**
 ```bash
-   npm install
+npm install
 ```
 
 3. **Configura las variables de entorno**
@@ -148,12 +148,22 @@ El bot enviará automáticamente el número de visitantes al grupo configurado:
 
 ```
 .
-├── index.js              # Archivo principal del bot
-├── .env                  # Variables de entorno (no incluir en git)
-├── .env.example          # Ejemplo de variables de entorno
-├── package.json          # Dependencias del proyecto
-├── .wwebjs_auth/         # Carpeta de sesión de WhatsApp (generada automáticamente)
-└── README.md             # Este archivo
+├── .env                  # Variables de entorno (no se versiona)
+├── .env.example          # Ejemplo de configuración de entorno
+├── .gitignore            # Archivos y carpetas ignorados por Git
+├── LICENSE               # Licencia MIT del proyecto
+├── README.md             # Documentación principal
+├── package.json          # Dependencias y scripts del proyecto
+├── package-lock.json     # Versión exacta de dependencias instaladas
+├── tsconfig.json         # Configuración de TypeScript
+├── structure.txt         # Descripción de la estructura del proyecto
+└── src/                  # Código fuente del bot
+    ├── index.ts          # Punto de entrada principal del bot
+    ├── types/            # Definiciones y ampliaciones de tipos TS
+    │   ├── env.d.ts      # Tipos para variables de entorno
+    │   └── index.ts      # Tipos globales y personalizados
+    └── utils/            # Funciones auxiliares y utilitarias
+        └── helpers.ts    # Funciones reutilizables (por ejemplo, formateo de hora o emojis)
 ```
 
 ## 🛠️ Dependencias
