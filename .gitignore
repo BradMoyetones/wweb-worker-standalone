@@ -24,6 +24,5 @@ dev-dist
 *.sln
 *.sw?
 
-.wwebjs_auth
-.wwebjs_cache
+.wwebjs_*
 .env
