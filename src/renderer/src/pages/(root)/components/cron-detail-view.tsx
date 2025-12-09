@@ -54,7 +54,7 @@ export function CronDetailView({ cronId, onBack, onSave }: CronDetailViewProps) 
 
     if (!cron) {
         return (
-            <div className="min-h-screen bg-background flex items-center justify-center p-4">
+            <div className="min-h-screen bg-linear-to-b from-primary/15 via-transparent to-transparent flex items-center justify-center p-4 rounded-xl">
                 <Card className="bg-card border-border p-6">
                     <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-4" />
                     <p className="text-center">Configuración no encontrada</p>
@@ -67,7 +67,7 @@ export function CronDetailView({ cronId, onBack, onSave }: CronDetailViewProps) 
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 p-4 md:p-8">
+        <div className="min-h-screen bg-linear-to-b from-primary/15 via-transparent to-transparent p-4 md:p-8 rounded-xl">
             <div className="max-w-3xl mx-auto">
                 {/* Header */}
                 <motion.div
@@ -95,7 +95,7 @@ export function CronDetailView({ cronId, onBack, onSave }: CronDetailViewProps) 
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                             {/* Basic Configuration */}
-                            <Card className="bg-card/30 backdrop-blur border-border/50 p-6">
+                            <Card className="p-6">
                                 <h2 className="text-lg font-semibold mb-4">Información General</h2>
                                 <div className="space-y-4">
                                     <FormField
@@ -130,7 +130,7 @@ export function CronDetailView({ cronId, onBack, onSave }: CronDetailViewProps) 
                             </Card>
 
                             {/* API Configuration */}
-                            <Card className="bg-card/30 backdrop-blur border-border/50 p-6">
+                            <Card className="p-6">
                                 <h2 className="text-lg font-semibold mb-4">Configuración de API</h2>
                                 <div className="space-y-4">
                                     <FormField
@@ -172,7 +172,7 @@ export function CronDetailView({ cronId, onBack, onSave }: CronDetailViewProps) 
                             </Card>
 
                             {/* Credentials */}
-                            <Card className="bg-card/30 backdrop-blur border-border/50 p-6">
+                            <Card className="p-6">
                                 <h2 className="text-lg font-semibold mb-4">Credenciales</h2>
                                 <div className="space-y-4">
                                     <FormField
@@ -221,7 +221,7 @@ export function CronDetailView({ cronId, onBack, onSave }: CronDetailViewProps) 
                             </Card>
 
                             {/* Schedule Configuration */}
-                            <Card className="bg-card/30 backdrop-blur border-border/50 p-6">
+                            <Card className="p-6">
                                 <h2 className="text-lg font-semibold mb-4">Programación</h2>
                                 <div className="space-y-4">
                                     <FormField
@@ -266,7 +266,7 @@ export function CronDetailView({ cronId, onBack, onSave }: CronDetailViewProps) 
                             </Card>
 
                             {/* Status */}
-                            <Card className="bg-card/30 backdrop-blur border-border/50 p-6">
+                            <Card className="p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <FormLabel className="text-base">Estado</FormLabel>

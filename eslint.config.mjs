@@ -48,18 +48,22 @@ export default defineConfig(
       // Reglas de react-hooks (spread de .configs.recommended.rules)
       ...eslintPluginReactHooks.configs.recommended.rules,
 
+      'prefer-const': 'off',
+
       // Regla @typescript-eslint/no-explicit-any
-      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-explicit-any': 'off',
 
       // Regla react-refresh/only-export-components (con la opción { allowConstantExport: true })
       'react-refresh/only-export-components': [
-        'warn',
+        'off',
         { allowConstantExport: true }
       ],
 
       // ¡IMPORTANTE! Para permitir tu función 'cn' sin el tipo de retorno:
       // Desactivar la regla 'explicit-function-return-type' de TypeScript
-      '@typescript-eslint/explicit-function-return-type': 'off'
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/no-implicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': "warn"
     }
   },
 )

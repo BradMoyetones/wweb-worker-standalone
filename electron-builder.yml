@@ -1,5 +1,5 @@
-appId: com.electron.app
-productName: template
+appId: com.worker.wweb-worker-standalone
+productName: wweb-worker-standalone
 directories:
   buildResources: build
 files:
@@ -11,24 +11,36 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
+  - out/renderer/assets/**
+  - out/renderer/img/**
+  - out/renderer/index.html
+  - drizzle/migrations/**
 win:
-  executableName: template
+  icon: resources/icon.png
+  executableName: WWEBWorker
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
+  allowElevation: true
   createDesktopShortcut: always
+  runAfterFinish: true
 mac:
+  icon: resources/icon.png
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
+    - NSSystemPolicyAllFiles: Application requires full system access.
+    - NSAppleEventsUsageDescription: Application needs access to other apps.
     - NSCameraUsageDescription: Application requests access to the device's camera.
     - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize: false
 dmg:
+  icon: resources/icon.png
   artifactName: ${name}-${version}.${ext}
 linux:
+  icon: resources/icon.png
   target:
     - AppImage
     - snap
@@ -39,7 +51,8 @@ appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
 publish:
-  provider: generic
-  url: https://example.com/auto-updates
+  provider: github
+  owner: BradMoyetones
+  repo: wweb-worker-standalone
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/

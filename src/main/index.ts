@@ -2,18 +2,26 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { installLatestVersionApp, verifyVersionApp } from '@app/config/updater'
+import { initializeClient } from '@app/lib/whatsappClient'
+import { Client } from 'whatsapp-web.js'
 
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
+    minWidth: 800,
+    minHeight: 600,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: false,
+      contextIsolation: true, // Asegúrate de que esté en true
+      nodeIntegration: false, // Esto debe estar en false para evitar problemas de seguridad
+      devTools: is.dev,
     }
   })
 
@@ -26,12 +34,22 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
+  mainWindow.on("maximize", () => {
+    mainWindow.webContents.send("maximize-changed", true);
+  });
+
+  mainWindow.on("unmaximize", () => {
+    mainWindow.webContents.send("maximize-changed", false);
+  });
+
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    // Error que me dio en producción
+    // mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    mainWindow.loadFile(join(process.resourcesPath, 'app.asar.unpacked', 'out', 'renderer', 'index.html'))
   }
 }
 
@@ -70,5 +88,141 @@ app.on('window-all-closed', () => {
   }
 })
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
+ipcMain.handle("get-app-version", () => {
+  return app.getVersion();
+});
+ipcMain.handle('verifyVersionApp', (_event) => {
+  return verifyVersionApp();
+});
+ipcMain.handle('installLatestVersionApp', (_event) => {
+  return installLatestVersionApp();
+});
+
+ipcMain.handle('get-platform', () => process.platform);
+
+ipcMain.on('minimize', () => {
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  if (focusedWindow) {
+    focusedWindow.minimize();
+  }
+});
+
+let isMaximized: boolean = false;
+ipcMain.handle('maximize', () => {
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  if (focusedWindow) {
+    if (focusedWindow.isMaximized()) {
+      focusedWindow.unmaximize();
+      isMaximized = false;
+    } else {
+      focusedWindow.maximize();
+      isMaximized = true;
+    }
+  }
+  return isMaximized;
+});
+ipcMain.handle('isMaximized', () => {
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  if (focusedWindow) {
+    return focusedWindow.isMaximized();
+  }
+  return false;
+});
+
+ipcMain.on('close', () => {
+  app.quit();
+});
+
+
+// WHATSAPP
+ipcMain.handle('whatsapp-init', async (event) => {
+  try {
+    await initializeClient(event.sender);
+    return { success: true };
+  } catch (err:any) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle("whatsapp-get-messages", async (event, chatId: string) => {
+  try {
+    const client = await initializeClient(event.sender) as Client | null;
+    if(!client) return
+
+    const chat = await client.getChatById(chatId);
+    const messages = await chat.fetchMessages({ limit: 100 }); // últimos 50
+    return messages;
+  } catch (err) {
+    console.error("Error fetching messages", err);
+    return [];
+  }
+});
+
+ipcMain.handle("whatsapp-download-media", async (event, messageId: string, chatId: string) => {
+  try {
+    const client = await initializeClient(event.sender) as Client | null;
+    if (!client) return null;
+
+    const chat = await client.getChatById(chatId);
+    const messages = await chat.fetchMessages({ limit: 50 });
+
+    const message = messages.find(m => m.id._serialized === messageId);
+    if (!message) return null;
+
+    if (!message.hasMedia) {
+      return { error: "No media in message" };
+    }
+
+    const media = await message.downloadMedia();
+    if (!media) {
+      return { error: "Failed to download media" };
+    }
+
+    return media;
+  } catch (err: any) {
+    console.error("Error downloading media", err);
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle("whatsapp-send-message", async (event, chatId: string, content: string, replyToId?: string | null) => {
+  try {
+    const client = await initializeClient(event.sender) as Client | null;
+    if (!client) return { error: "No client initialized" };
+
+    const chat = await client.getChatById(chatId);
+    if (!chat) return { error: "Chat not found" };
+
+    if (replyToId) {
+      // buscar el mensaje al que queremos responder
+      const messages = await chat.fetchMessages({ limit: 100 }); // búscalo en los últimos 100 por si acaso
+      const msgToReply = messages.find(m => m.id._serialized === replyToId);
+
+      if (!msgToReply) {
+        return { error: "Message to reply not found" };
+      }
+
+      await msgToReply.reply(content, chatId);
+      return { success: true, replied: true };
+    } else {
+      await client.sendMessage(chatId, content);
+      return { success: true, replied: false };
+    }
+  } catch (err: any) {
+    console.error("Error sending message", err);
+    return { error: err.message };
+  }
+});
+
+// DATABASE
+ipcMain.handle('getAllCrones', (_event) => {
+  // return getAllWorkflows();
+});
+
+ipcMain.handle('createCron', (_event, input) => {
+  // return createWorkflow(input);
+});
+
+ipcMain.handle('findCronById', (_event, id) => {
+  // return findWorkflowById(id);
+});

@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@import "./themes.css";
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -121,13 +123,37 @@
         @apply border-border outline-ring/50;
     }
 
+    html {
+        @apply scroll-smooth;
+    }
+
     body {
         @apply bg-background text-foreground font-onest;
     }
 }
 
+@utility theme-container {
+  @apply font-onest;
+}
+
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 body {
     background-image: url('../assets/wavy-lines.svg');
-    background-size: cover;
+    background-size: 100%;
     user-select: none;
+}
+
+/* Mode Toggle */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
 }
