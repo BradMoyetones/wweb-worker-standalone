@@ -1,23 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { X } from 'lucide-react';
-import { cronConfigSchema, type CronConfig } from '@/lib/schemas';
+import { ChevronDown, Plus, X } from 'lucide-react';
+import { cronConfigSchema, cronWorkflowStepSchema } from '@/lib/schemas';
+import { TimezoneSelect } from './timezone-select';
+import { KeyValueEditor } from './key-value-editor';
+import type { CronConfig, CronWorkflowStep } from '@/lib/schemas';
 
 // Schema para creación (sin id, createdAt, updatedAt)
-export const createCronSchema = cronConfigSchema.omit({
-    id: true,
-    isActive: true,
-    createdAt: true,
-    updatedAt: true,
+const createCronSchema = cronConfigSchema.omit({ id: true, createdAt: true, updatedAt: true }).extend({
+    steps: z.array(cronWorkflowStepSchema.omit({ id: true, cronConfigId: true, createdAt: true })),
 });
 
 type CreateCronFormData = z.infer<typeof createCronSchema>;
@@ -25,41 +25,63 @@ type CreateCronFormData = z.infer<typeof createCronSchema>;
 interface CreateCronModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: Omit<CronConfig, 'id' | 'createdAt' | 'updatedAt'>) => void;
+    onSubmit: (
+        data: Omit<CronConfig, 'id' | 'createdAt' | 'updatedAt'> & {
+            steps: Omit<CronWorkflowStep, 'id' | 'cronConfigId' | 'createdAt'>[];
+        }
+    ) => void;
 }
 
 export function CreateCronModal({ isOpen, onClose, onSubmit }: CreateCronModalProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [expandedStep, setExpandedStep] = useState<number | null>(0);
 
     const {
         register,
         handleSubmit,
+        control,
+        watch,
         formState: { errors },
         reset,
+        setValue,
     } = useForm<CreateCronFormData>({
         resolver: zodResolver(createCronSchema),
         defaultValues: {
             timezone: 'America/Bogota',
-            hiddenField: 'S',
-            intervalMinutes: 5,
-            startAt: '09:00',
+            isActive: false,
+            steps: [
+                {
+                    stepOrder: 1,
+                    name: '',
+                    method: 'POST',
+                    url: '',
+                    headers: '{}',
+                    body: '{}',
+                    responseFormat: 'text',
+                },
+            ],
         },
+    });
+
+    const {
+        fields: stepFields,
+        append: appendStep,
+        remove: removeStep,
+    } = useFieldArray({
+        control,
+        name: 'steps',
     });
 
     const handleFormSubmit = async (data: CreateCronFormData) => {
         setIsSubmitting(true);
-        const newCron = {
-            ...data,
-            isActive: false,
-        };
-
-        console.log('[v0] Nueva configuración de crone creada:', newCron);
-        onSubmit(newCron as Omit<CronConfig, 'id' | 'createdAt' | 'updatedAt'>);
-
+        console.log('[v0] Nueva configuración de crone creada:', data);
+        onSubmit(data);
         reset();
         setIsSubmitting(false);
         onClose();
     };
+
+    const timezone = watch('timezone');
 
     return (
         <AnimatePresence>
@@ -82,13 +104,13 @@ export function CreateCronModal({ isOpen, onClose, onSubmit }: CreateCronModalPr
                         transition={{ duration: 0.3, ease: 'easeOut' }}
                         className="fixed inset-0 flex items-center justify-center z-50 p-4"
                     >
-                        <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-0 gap-0">
+                        <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-0 gap-0 bg-card wavy-lines">
                             {/* Header */}
-                            <div className="sticky top-0 bg-background border-b border-border/50 p-6 flex items-center justify-between">
+                            <div className="sticky top-0 bg-background/10 backdrop-blur-md border-b border-border/50 p-6 flex items-center justify-between z-10">
                                 <div>
                                     <h2 className="text-2xl font-bold">Crear Nueva Configuración</h2>
                                     <p className="text-sm text-muted-foreground mt-1">
-                                        Completa los datos para crear una nueva configuración de crone
+                                        Define los pasos del workflow y la programación del cron
                                     </p>
                                 </div>
                                 <motion.button
@@ -102,215 +124,308 @@ export function CreateCronModal({ isOpen, onClose, onSubmit }: CreateCronModalPr
                             </div>
 
                             {/* Form */}
-                            <form onSubmit={handleSubmit(handleFormSubmit)} className="px-6 pt-6 space-y-6">
+                            <form onSubmit={handleSubmit(handleFormSubmit)} className="p-6 space-y-6">
                                 {/* Nombre del Grupo */}
                                 <motion.div
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.05 }}
                                 >
-                                    <Label htmlFor="groupName" className="text-sm font-medium">
-                                        Nombre del Grupo
-                                    </Label>
-                                    <Input
-                                        id="groupName"
-                                        placeholder="ej: Workers WhatsApp Prod"
-                                        {...register('groupName')}
-                                        className="mt-2 bg-muted/50 border-border/50 focus:border-primary"
-                                    />
-                                    {errors.groupName && (
-                                        <p className="text-xs text-red-500 mt-1">{errors.groupName.message}</p>
-                                    )}
+                                    <h3 className="text-lg font-semibold mb-4">Información General</h3>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <Label htmlFor="groupName" className="text-sm font-medium">
+                                                Nombre del Grupo
+                                            </Label>
+                                            <Input
+                                                id="groupName"
+                                                placeholder="ej: Workers WhatsApp Prod"
+                                                {...register('groupName')}
+                                                className="mt-2 bg-muted/50 border-border/50 focus:border-primary"
+                                            />
+                                            {errors.groupName && (
+                                                <p className="text-xs text-red-500 mt-1">{errors.groupName.message}</p>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <Label htmlFor="name" className="text-sm font-medium">
+                                                Nombre Descriptivo
+                                            </Label>
+                                            <Input
+                                                id="name"
+                                                placeholder="ej: Contador de Visitantes"
+                                                {...register('name')}
+                                                className="mt-2 bg-muted/50 border-border/50 focus:border-primary"
+                                            />
+                                            {errors.name && (
+                                                <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <Label htmlFor="description" className="text-sm font-medium">
+                                                Descripción (Opcional)
+                                            </Label>
+                                            <Input
+                                                id="description"
+                                                placeholder="¿Qué hace este workflow?"
+                                                {...register('description')}
+                                                className="mt-2 bg-muted/50 border-border/50 focus:border-primary"
+                                            />
+                                        </div>
+                                    </div>
                                 </motion.div>
 
-                                {/* URLs */}
-                                <div className="grid md:grid-cols-2 gap-4">
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.1 }}
-                                    >
-                                        <Label htmlFor="apiUrl" className="text-sm font-medium">
-                                            API URL
-                                        </Label>
-                                        <Input
-                                            id="apiUrl"
-                                            placeholder="https://api.example.com"
-                                            {...register('apiUrl')}
-                                            className="mt-2 bg-muted/50 border-border/50 focus:border-primary"
-                                        />
-                                        {errors.apiUrl && (
-                                            <p className="text-xs text-red-500 mt-1">{errors.apiUrl.message}</p>
-                                        )}
-                                    </motion.div>
-
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.15 }}
-                                    >
-                                        <Label htmlFor="apiLoginUrl" className="text-sm font-medium">
-                                            API Login URL
-                                        </Label>
-                                        <Input
-                                            id="apiLoginUrl"
-                                            placeholder="https://api.example.com/login"
-                                            {...register('apiLoginUrl')}
-                                            className="mt-2 bg-muted/50 border-border/50 focus:border-primary"
-                                        />
-                                        {errors.apiLoginUrl && (
-                                            <p className="text-xs text-red-500 mt-1">{errors.apiLoginUrl.message}</p>
-                                        )}
-                                    </motion.div>
-                                </div>
-
-                                {/* Credenciales */}
-                                <div className="grid md:grid-cols-2 gap-4">
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.2 }}
-                                    >
-                                        <Label htmlFor="username" className="text-sm font-medium">
-                                            Usuario
-                                        </Label>
-                                        <Input
-                                            id="username"
-                                            placeholder="usuario@example.com"
-                                            {...register('username')}
-                                            className="mt-2 bg-muted/50 border-border/50 focus:border-primary"
-                                        />
-                                        {errors.username && (
-                                            <p className="text-xs text-red-500 mt-1">{errors.username.message}</p>
-                                        )}
-                                    </motion.div>
-
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.25 }}
-                                    >
-                                        <Label htmlFor="password" className="text-sm font-medium">
-                                            Contraseña
-                                        </Label>
-                                        <Input
-                                            id="password"
-                                            type="password"
-                                            placeholder="••••••••"
-                                            {...register('password')}
-                                            className="mt-2 bg-muted/50 border-border/50 focus:border-primary"
-                                        />
-                                        {errors.password && (
-                                            <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>
-                                        )}
-                                    </motion.div>
-                                </div>
-
-                                {/* Configuración de Tiempo */}
-                                <div className="grid md:grid-cols-3 gap-4">
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.3 }}
-                                    >
-                                        <Label htmlFor="startAt" className="text-sm font-medium">
-                                            Inicia A
-                                        </Label>
-                                        <Input
-                                            id="startAt"
-                                            placeholder="HH:MM"
-                                            {...register('startAt')}
-                                            className="mt-2 bg-muted/50 border-border/50 focus:border-primary font-mono"
-                                        />
-                                        {errors.startAt && (
-                                            <p className="text-xs text-red-500 mt-1">{errors.startAt.message}</p>
-                                        )}
-                                    </motion.div>
-
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.35 }}
-                                    >
-                                        <Label htmlFor="intervalMinutes" className="text-sm font-medium">
-                                            Intervalo (minutos)
-                                        </Label>
-                                        <Input
-                                            id="intervalMinutes"
-                                            type="number"
-                                            min="1"
-                                            max="1440"
-                                            {...register('intervalMinutes', { valueAsNumber: true })}
-                                            className="mt-2 bg-muted/50 border-border/50 focus:border-primary"
-                                        />
-                                        {errors.intervalMinutes && (
-                                            <p className="text-xs text-red-500 mt-1">
-                                                {errors.intervalMinutes.message}
+                                {/* Programación */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.1 }}
+                                >
+                                    <h3 className="text-lg font-semibold mb-4">Programación</h3>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <Label htmlFor="cronExpression" className="text-sm font-medium">
+                                                Expresión Cron
+                                            </Label>
+                                            <Input
+                                                id="cronExpression"
+                                                placeholder="0 0 * * * (Medianoche diariamente)"
+                                                {...register('cronExpression')}
+                                                className="mt-2 bg-muted/50 border-border/50 focus:border-primary font-mono text-xs"
+                                            />
+                                            {errors.cronExpression && (
+                                                <p className="text-xs text-red-500 mt-1">
+                                                    {errors.cronExpression.message}
+                                                </p>
+                                            )}
+                                            <p className="text-xs text-muted-foreground mt-2">
+                                                Formato: minuto hora día mes día-semana
                                             </p>
-                                        )}
-                                    </motion.div>
+                                        </div>
 
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.4 }}
-                                    >
-                                        <Label htmlFor="timezone" className="text-sm font-medium">
-                                            Zona Horaria
-                                        </Label>
-                                        <Input
-                                            id="timezone"
-                                            placeholder="America/Bogota"
-                                            {...register('timezone')}
-                                            className="mt-2 bg-muted/50 border-border/50 focus:border-primary"
-                                        />
-                                        {errors.timezone && (
-                                            <p className="text-xs text-red-500 mt-1">{errors.timezone.message}</p>
-                                        )}
-                                    </motion.div>
-                                </div>
-
-                                {/* Campo Oculto */}
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.45 }}
-                                >
-                                    <Label htmlFor="hiddenField" className="text-sm font-medium">
-                                        Campo Oculto
-                                    </Label>
-                                    <Input
-                                        id="hiddenField"
-                                        placeholder="S"
-                                        {...register('hiddenField')}
-                                        className="mt-2 bg-muted/50 border-border/50 focus:border-primary"
-                                    />
-                                    {errors.hiddenField && (
-                                        <p className="text-xs text-red-500 mt-1">{errors.hiddenField.message}</p>
-                                    )}
+                                        <div>
+                                            <Label className="text-sm font-medium mb-2 block">Zona Horaria</Label>
+                                            <TimezoneSelect
+                                                value={timezone}
+                                                onChange={(val) => setValue('timezone', val)}
+                                            />
+                                            {errors.timezone && (
+                                                <p className="text-xs text-red-500 mt-1">{errors.timezone.message}</p>
+                                            )}
+                                        </div>
+                                    </div>
                                 </motion.div>
 
-                                {/* Actions */}
+                                {/* Workflow Steps */}
                                 <motion.div
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.5 }}
-                                    className="flex gap-3 py-4 border-t border-border/50 sticky bottom-0 bg-card"
+                                    transition={{ delay: 0.15 }}
                                 >
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={onClose}
-                                        disabled={isSubmitting}
-                                        className="flex-1 bg-transparent"
-                                    >
-                                        Cancelar
-                                    </Button>
-                                    <Button type="submit" disabled={isSubmitting} className="flex-1">
-                                        {isSubmitting ? 'Creando...' : 'Crear Configuración'}
-                                    </Button>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-lg font-semibold">Pasos del Workflow</h3>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => {
+                                                appendStep({
+                                                    stepOrder: stepFields.length + 1,
+                                                    name: '',
+                                                    method: 'POST',
+                                                    url: '',
+                                                    headers: '{}',
+                                                    body: '{}',
+                                                    responseFormat: 'text',
+                                                });
+                                            }}
+                                            className="gap-1"
+                                        >
+                                            <Plus className="w-3 h-3" />
+                                            Agregar Paso
+                                        </Button>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        {stepFields.map((field, index) => (
+                                            <motion.div
+                                                key={field.id}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                            >
+                                                <Card className="bg-muted/30 border-border/50 overflow-hidden p-0 gap-0">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setExpandedStep(expandedStep === index ? null : index)
+                                                        }
+                                                        className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors"
+                                                    >
+                                                        <div className="text-left">
+                                                            <p className="font-medium text-sm">
+                                                                Paso {index + 1}:{' '}
+                                                                {watch(`steps.${index}.name`) || 'Sin nombre'}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {watch(`steps.${index}.method`)} •{' '}
+                                                                {watch(`steps.${index}.url`)}
+                                                            </p>
+                                                        </div>
+                                                        <ChevronDown
+                                                            className={`w-4 h-4 transition-transform ${expandedStep === index ? 'rotate-180' : ''}`}
+                                                        />
+                                                    </button>
+
+                                                    <AnimatePresence>
+                                                        {expandedStep === index && (
+                                                            <motion.div
+                                                                initial={{ opacity: 0, height: 0 }}
+                                                                animate={{ opacity: 1, height: 'auto' }}
+                                                                exit={{ opacity: 0, height: 0 }}
+                                                                className="border-t border-border/50 p-4 bg-background/50 space-y-4"
+                                                            >
+                                                                <div className="grid md:grid-cols-2 gap-4">
+                                                                    <div>
+                                                                        <Label className="text-xs font-medium">
+                                                                            Nombre del Paso
+                                                                        </Label>
+                                                                        <Input
+                                                                            placeholder="ej: Login"
+                                                                            {...register(`steps.${index}.name`)}
+                                                                            className="mt-2 h-8 text-sm bg-muted/50"
+                                                                        />
+                                                                        {errors.steps?.[index]?.name && (
+                                                                            <p className="text-xs text-red-500 mt-1">
+                                                                                {errors.steps[index]?.name?.message}
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+
+                                                                    <div>
+                                                                        <Label className="text-xs font-medium">
+                                                                            Método HTTP
+                                                                        </Label>
+                                                                        <select
+                                                                            {...register(`steps.${index}.method`)}
+                                                                            className="w-full mt-2 h-8 rounded-md border border-border/50 bg-muted/50 text-sm px-2"
+                                                                        >
+                                                                            <option value="GET">GET</option>
+                                                                            <option value="POST">POST</option>
+                                                                            <option value="PUT">PUT</option>
+                                                                            <option value="DELETE">DELETE</option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div>
+                                                                    <Label className="text-xs font-medium">URL</Label>
+                                                                    <Input
+                                                                        placeholder="https://api.example.com/endpoint"
+                                                                        {...register(`steps.${index}.url`)}
+                                                                        className="mt-2 h-8 text-sm bg-muted/50"
+                                                                    />
+                                                                    {errors.steps?.[index]?.url && (
+                                                                        <p className="text-xs text-red-500 mt-1">
+                                                                            {errors.steps[index]?.url?.message}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+
+                                                                <KeyValueEditor
+                                                                    label="Headers"
+                                                                    value={watch(`steps.${index}.headers`)}
+                                                                    onChange={(val) =>
+                                                                        setValue(`steps.${index}.headers`, val)
+                                                                    }
+                                                                    placeholder="Agregar headers HTTP"
+                                                                />
+
+                                                                <KeyValueEditor
+                                                                    label="Body (Key-Value)"
+                                                                    value={watch(`steps.${index}.body`)}
+                                                                    onChange={(val) =>
+                                                                        setValue(`steps.${index}.body`, val)
+                                                                    }
+                                                                    placeholder="Agregar parámetros del body"
+                                                                />
+
+                                                                <div className="grid md:grid-cols-2 gap-4">
+                                                                    <div>
+                                                                        <Label className="text-xs font-medium">
+                                                                            Formato de Respuesta
+                                                                        </Label>
+                                                                        <select
+                                                                            {...register(
+                                                                                `steps.${index}.responseFormat`
+                                                                            )}
+                                                                            className="w-full mt-2 h-8 rounded-md border border-border/50 bg-muted/50 text-sm px-2"
+                                                                        >
+                                                                            <option value="json">JSON</option>
+                                                                            <option value="text">Texto Plano</option>
+                                                                        </select>
+                                                                    </div>
+
+                                                                    <div>
+                                                                        <Label className="text-xs font-medium">
+                                                                            Data Path (Opcional)
+                                                                        </Label>
+                                                                        <Input
+                                                                            placeholder="ej: data.count"
+                                                                            {...register(`steps.${index}.dataPath`)}
+                                                                            className="mt-2 h-8 text-sm bg-muted/50"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+
+                                                                {stepFields.length > 1 && (
+                                                                    <Button
+                                                                        type="button"
+                                                                        size="sm"
+                                                                        variant="destructive"
+                                                                        onClick={() => removeStep(index)}
+                                                                        className="w-full gap-2"
+                                                                    >
+                                                                        <X className="w-3 h-3" />
+                                                                        Eliminar Paso
+                                                                    </Button>
+                                                                )}
+                                                            </motion.div>
+                                                        )}
+                                                    </AnimatePresence>
+                                                </Card>
+                                            </motion.div>
+                                        ))}
+                                    </div>
                                 </motion.div>
                             </form>
+                            {/* Actions */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.5 }}
+                                className="flex gap-3 p-4 border-t border-border/50 sticky bottom-0 bg-background/10 backdrop-blur-md z-10"
+                            >
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={onClose}
+                                    disabled={isSubmitting}
+                                    className="flex-1"
+                                >
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    onClick={handleSubmit(handleFormSubmit)}
+                                    className="flex-1"
+                                >
+                                    {isSubmitting ? 'Creando...' : 'Crear Configuración'}
+                                </Button>
+                            </motion.div>
                         </Card>
                     </motion.div>
                 </>

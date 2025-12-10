@@ -1,17 +1,13 @@
-import type { CronConfig } from './schemas';
+import type { CronConfig, CronWorkflowStep } from './schemas';
 
 export const mockCronConfigs: CronConfig[] = [
     {
         id: '1',
         groupName: 'PJD SERVICIO Y EVENTOS',
-        apiUrl: 'https://secure.parquejaimeduque.com/consulta-total-ventas.asp',
-        apiLoginUrl: 'https://secure.parquejaimeduque.com/login.asp',
+        name: 'Contador de Visitantes',
+        description: 'Obtiene contador de visitantes y lo envía a WhatsApp',
+        cronExpression: '0 */4 * * *',
         timezone: 'America/Bogota',
-        username: 'brad.moyetones',
-        password: 'brad130403',
-        hiddenField: 'S',
-        startAt: '10:00',
-        intervalMinutes: 30,
         isActive: true,
         createdAt: new Date('2024-01-15'),
         updatedAt: new Date('2024-12-09'),
@@ -19,14 +15,10 @@ export const mockCronConfigs: CronConfig[] = [
     {
         id: '2',
         groupName: 'PJD VENTAS',
-        apiUrl: 'https://secure.parquejaimeduque.com/consulta-ventas.asp',
-        apiLoginUrl: 'https://secure.parquejaimeduque.com/login.asp',
+        name: 'Reporte de Ventas',
+        description: 'Reportes diarios de ventas',
+        cronExpression: '0 0 * * *',
         timezone: 'America/Bogota',
-        username: 'admin.ventas',
-        password: 'secure123456',
-        hiddenField: 'S',
-        startAt: '08:00',
-        intervalMinutes: 60,
         isActive: false,
         createdAt: new Date('2024-02-01'),
         updatedAt: new Date('2024-12-08'),
@@ -34,16 +26,56 @@ export const mockCronConfigs: CronConfig[] = [
     {
         id: '3',
         groupName: 'PJD REPORTES',
-        apiUrl: 'https://secure.parquejaimeduque.com/consulta-reportes.asp',
-        apiLoginUrl: 'https://secure.parquejaimeduque.com/login.asp',
+        name: 'Sincronización de Datos',
+        description: 'Sincroniza datos entre servidores',
+        cronExpression: '0 */2 * * *',
         timezone: 'America/Bogota',
-        username: 'reportes.admin',
-        password: 'report999777',
-        hiddenField: 'S',
-        startAt: '06:00',
-        intervalMinutes: 120,
         isActive: true,
         createdAt: new Date('2024-03-10'),
         updatedAt: new Date('2024-12-07'),
     },
+];
+
+export const mockCronWorkflowSteps: CronWorkflowStep[] = [
+    // Steps para config 1 (PJD SERVICIO Y EVENTOS)
+    {
+        id: 's1',
+        cronConfigId: '1',
+        stepOrder: 1,
+        name: 'Login',
+        method: 'POST',
+        url: 'https://secure.parquejaimeduque.com/login.asp',
+        headers: JSON.stringify({ 'Content-Type': 'application/x-www-form-urlencoded' }),
+        body: JSON.stringify({ txtUsuario: 'brad.moyetones', txtClave: 'brad130403', hdnEnviado: 'S' }),
+        responseFormat: 'text',
+    },
+    {
+        id: 's2',
+        cronConfigId: '1',
+        stepOrder: 2,
+        name: 'Fetch Visitantes',
+        method: 'POST',
+        url: 'https://secure.parquejaimeduque.com/consulta-total-ventas.asp',
+        headers: JSON.stringify({ Cookie: '{{previousStep.data}}' }),
+        body: JSON.stringify({}),
+        responseFormat: 'text',
+        dataPath: 'body.count',
+    },
+];
+
+export const TIMEZONES = [
+    'America/New_York',
+    'America/Chicago',
+    'America/Denver',
+    'America/Los_Angeles',
+    'America/Bogota',
+    'America/Argentina/Buenos_Aires',
+    'America/Sao_Paulo',
+    'Europe/London',
+    'Europe/Paris',
+    'Europe/Madrid',
+    'Asia/Dubai',
+    'Asia/Shanghai',
+    'Asia/Tokyo',
+    'Australia/Sydney',
 ];

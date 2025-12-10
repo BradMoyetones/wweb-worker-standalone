@@ -145,10 +145,9 @@
   }
 }
 
-body {
-    background-image: url('../assets/wavy-lines.svg');
-    background-size: 100%;
-    user-select: none;
+@utility wavy-lines {
+  background-image: url('../assets/wavy-lines.svg');
+  background-size: 100%;
 }
 
 /* Mode Toggle */

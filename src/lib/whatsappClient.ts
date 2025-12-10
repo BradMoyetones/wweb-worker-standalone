@@ -1,5 +1,6 @@
 import { Chat, Client, ClientInfo, Contact, LocalAuth } from 'whatsapp-web.js';
 import path from 'path';
+import fs from 'fs';
 import { app, WebContents } from 'electron'; // Importa 'app' para acceder a rutas del sistema
 
 let client: Client | null = null;
@@ -15,6 +16,37 @@ let lastStatus: { status: string; qr?: string; error?: string } = { status: 'ini
 // Utiliza una ubicación segura y persistente en el sistema del usuario
 const userDataPath = app.getPath('userData');
 const sessionPath = path.join(userDataPath, 'wwebjs_auth');
+
+console.log(userDataPath);
+
+const BOOT_TIMEOUT = 25000; // 25 segundos
+
+let booted = false; // se pone en true cuando cualquier evento real ocurre
+
+const bootTimeout = setTimeout(() => {
+    if (!booted) {
+        console.log("[WATCHDOG] WhatsApp se quedó pegado. Reseteando sesión...");
+
+        try {
+            fs.rmSync(sessionPath, { recursive: true, force: true });
+        } catch (err) {
+            console.error("Error borrando sesión corrupta:", err);
+        }
+
+        // Mata la app
+        app.relaunch();
+        app.exit(0);
+    }
+}, BOOT_TIMEOUT);
+
+// Marcar cuando la app realmente avanza
+function markBooted() {
+    if (!booted) {
+        booted = true;
+        clearTimeout(bootTimeout);
+    }
+}
+
 
 function sendToRenderer(channel: string, payload: any) {
     if (activeWebContents && !activeWebContents.isDestroyed()) {
@@ -58,12 +90,14 @@ export const initializeClient = (webContents: Electron.WebContents) => {
 
         // Escuchadores de eventos
         client.on('qr', (qr) => {
+            markBooted()
             console.log('QR RECEIVED', qr);
             lastStatus = { status: 'qr', qr };
             sendToRenderer('whatsapp-status', lastStatus);
         });
 
         client.on('ready', async() => {
+            markBooted()
             if(!client) return
             console.log('Client is ready!');
 
@@ -131,12 +165,14 @@ export const initializeClient = (webContents: Electron.WebContents) => {
         });
 
         client.on('authenticated', (session) => {
+            markBooted()
             console.log('AUTHENTICATED', session);
             lastStatus = { status: 'authenticated' };
             sendToRenderer('whatsapp-status', lastStatus);
         });
 
         client.on('auth_failure', msg => {
+            markBooted()
             console.error('AUTHENTICATION FAILURE', msg);
             lastStatus = { status: 'auth_failure', error: msg };
             sendToRenderer('whatsapp-status', lastStatus);

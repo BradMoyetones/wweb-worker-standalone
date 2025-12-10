@@ -3,12 +3,12 @@
 import type React from 'react';
 
 import { useMemo } from 'react';
-import { mockCronConfigs } from '@/lib/mock-data';
+import { mockCronConfigs, mockCronWorkflowSteps } from '@/lib/mock-data';
 import type { CronConfig } from '@/lib/schemas';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { motion } from 'framer-motion';
-import { Plus, Play, Pause, Trash2, ChevronRight } from 'lucide-react';
+import { Plus, Play, Pause, Trash2, ChevronRight, GitBranch } from 'lucide-react';
 
 interface CronListViewProps {
     onSelectCron: (id: string) => void;
@@ -42,7 +42,9 @@ export function CronListView({ onSelectCron, refreshTrigger, onCreateCron }: Cro
     const activeCount = crons.filter((c) => c.isActive).length;
     const totalCount = crons.length;
 
-    
+    const getStepCount = (cronId: string) => {
+        return mockCronWorkflowSteps.filter((s) => s.cronConfigId === cronId).length
+    }
 
     return (
         <div className="min-h-screen bg-linear-to-b from-primary/15 via-transparent to-transparent p-4 md:p-8 rounded-xl">
@@ -93,7 +95,7 @@ export function CronListView({ onSelectCron, refreshTrigger, onCreateCron }: Cro
                 <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid gap-4">
                     {crons.map((cron) => (
                         <motion.div key={cron.id} variants={itemVariants}>
-                            <CronCard cron={cron} onSelect={onSelectCron} />
+                            <CronCard cron={cron} onSelect={onSelectCron} stepsCount={getStepCount(cron.id!)} />
                         </motion.div>
                     ))}
                 </motion.div>
@@ -102,7 +104,7 @@ export function CronListView({ onSelectCron, refreshTrigger, onCreateCron }: Cro
     );
 }
 
-function CronCard({ cron, onSelect }: { cron: CronConfig; onSelect: (id: string) => void }) {
+function CronCard({ cron, onSelect, stepsCount }: { cron: CronConfig; onSelect: (id: string) => void; stepsCount: number }) {
     const handleToggle = (e: React.MouseEvent) => {
         e.stopPropagation();
     };
@@ -119,7 +121,7 @@ function CronCard({ cron, onSelect }: { cron: CronConfig; onSelect: (id: string)
                 ease: "linear",
                 duration: 0.1
             }}
-            onClick={() => onSelect(cron.id)}
+            onClick={() => onSelect(cron.id!)}
             className="cursor-pointer"
         >
             <Card className="p-4">
@@ -131,7 +133,7 @@ function CronCard({ cron, onSelect }: { cron: CronConfig; onSelect: (id: string)
                                     cron.isActive ? 'bg-emerald-500 animate-pulse' : 'bg-muted-foreground'
                                 }`}
                             />
-                            <h3 className="text-lg font-semibold">{cron.groupName}</h3>
+                            <h3 className="text-lg font-semibold">{cron.name}</h3>
                             <span
                                 className={`text-xs px-2 py-1 rounded-full ${
                                     cron.isActive
@@ -142,9 +144,14 @@ function CronCard({ cron, onSelect }: { cron: CronConfig; onSelect: (id: string)
                                 {cron.isActive ? 'Activo' : 'Inactivo'}
                             </span>
                         </div>
-                        <div className="text-sm text-muted-foreground mt-2">
-                            Intervalo: {cron.intervalMinutes} min • Inicia: {cron.startAt}
+                        <div className="text-sm text-muted-foreground mt-2 flex items-center gap-3">
+                            <span>Grupo: {cron.groupName}</span>
+                            <span className="flex items-center gap-1">
+                                <GitBranch className="w-3 h-3" />
+                                {stepsCount} paso{stepsCount !== 1 ? "s" : ""}
+                            </span>
                         </div>
+                        {cron.description && <p className="text-xs text-muted-foreground mt-1">{cron.description}</p>}
                     </div>
                     <div className="flex items-center gap-2">
                         <Button variant="ghost" size="icon" onClick={handleToggle} className="hover:bg-muted/50">

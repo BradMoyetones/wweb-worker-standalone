@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { mockCronConfigs } from '@/lib/mock-data';
+import { mockCronConfigs, mockCronWorkflowSteps } from '@/lib/mock-data';
 import { type CronConfig, cronConfigSchema } from '@/lib/schemas';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,8 +10,9 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
+import { motion } from 'motion/react';
+import { ArrowLeft, Save, AlertCircle, ChevronDown, GitBranch } from 'lucide-react';
+import { TimezoneSelect } from './timezone-select';
 
 interface CronDetailViewProps {
     cronId: string;
@@ -22,24 +23,19 @@ interface CronDetailViewProps {
 export function CronDetailView({ cronId, onBack, onSave }: CronDetailViewProps) {
     const cron = useMemo(() => mockCronConfigs.find((c) => c.id === cronId), [cronId]);
 
+    const steps = useMemo(() => mockCronWorkflowSteps.filter((s) => s.cronConfigId === cronId), [cronId]);
+
     const [isSaving, setIsSaving] = useState(false);
+    const [expandedSteps, setExpandedSteps] = useState<number[]>([]);
 
     const form = useForm<CronConfig>({
         resolver: zodResolver(cronConfigSchema),
         defaultValues: cron || {
-            id: Date.now().toString(),
             groupName: '',
-            apiUrl: '',
-            apiLoginUrl: '',
+            name: '',
             timezone: 'America/Bogota',
-            username: '',
-            password: '',
-            hiddenField: 'S',
-            startAt: '10:00',
-            intervalMinutes: 30,
+            cronExpression: '',
             isActive: false,
-            createdAt: new Date(),
-            updatedAt: new Date(),
         },
     });
 
@@ -66,6 +62,10 @@ export function CronDetailView({ cronId, onBack, onSave }: CronDetailViewProps) 
         );
     }
 
+    const toggleStep = (index: number) => {
+        setExpandedSteps((prev) => (prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]));
+    };
+
     return (
         <div className="min-h-screen bg-linear-to-b from-primary/15 via-transparent to-transparent p-4 md:p-8 rounded-xl">
             <div className="max-w-3xl mx-auto">
@@ -80,9 +80,10 @@ export function CronDetailView({ cronId, onBack, onSave }: CronDetailViewProps) 
                         <ArrowLeft className="w-4 h-4" />
                         Volver
                     </Button>
-                    <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{cron.groupName}</h1>
+                    <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{cron.name}</h1>
                     <p className="text-muted-foreground mt-2">
-                        Última actualización: {cron.updatedAt.toLocaleDateString('es-ES')}
+                        {cron.groupName} • Última actualización:{' '}
+                        {cron.updatedAt?.toLocaleDateString('es-ES') ?? 'No actualizado'}
                     </p>
                 </motion.div>
 
@@ -114,37 +115,12 @@ export function CronDetailView({ cronId, onBack, onSave }: CronDetailViewProps) 
 
                                     <FormField
                                         control={form.control}
-                                        name="timezone"
+                                        name="name"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Zona Horaria</FormLabel>
+                                                <FormLabel>Nombre Descriptivo</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="America/Bogota" {...field} />
-                                                </FormControl>
-                                                <FormDescription>Zona horaria para ejecutar el cron</FormDescription>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            </Card>
-
-                            {/* API Configuration */}
-                            <Card className="p-6">
-                                <h2 className="text-lg font-semibold mb-4">Configuración de API</h2>
-                                <div className="space-y-4">
-                                    <FormField
-                                        control={form.control}
-                                        name="apiUrl"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>URL de API</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        type="url"
-                                                        placeholder="https://example.com/api"
-                                                        {...field}
-                                                    />
+                                                    <Input placeholder="Ej: Contador de Visitantes" {...field} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -153,66 +129,13 @@ export function CronDetailView({ cronId, onBack, onSave }: CronDetailViewProps) 
 
                                     <FormField
                                         control={form.control}
-                                        name="apiLoginUrl"
+                                        name="description"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>URL de Login</FormLabel>
+                                                <FormLabel>Descripción</FormLabel>
                                                 <FormControl>
-                                                    <Input
-                                                        type="url"
-                                                        placeholder="https://example.com/login"
-                                                        {...field}
-                                                    />
+                                                    <Input placeholder="Descripción del workflow" {...field} />
                                                 </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            </Card>
-
-                            {/* Credentials */}
-                            <Card className="p-6">
-                                <h2 className="text-lg font-semibold mb-4">Credenciales</h2>
-                                <div className="space-y-4">
-                                    <FormField
-                                        control={form.control}
-                                        name="username"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Usuario</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="usuario@example.com" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="password"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Contraseña</FormLabel>
-                                                <FormControl>
-                                                    <Input type="password" placeholder="••••••••" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="hiddenField"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Campo Oculto</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="S" {...field} />
-                                                </FormControl>
-                                                <FormDescription>Valor del campo oculto del formulario</FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -221,21 +144,23 @@ export function CronDetailView({ cronId, onBack, onSave }: CronDetailViewProps) 
                             </Card>
 
                             {/* Schedule Configuration */}
-                            <Card className="p-6">
+                            <Card className="bg-card/30 backdrop-blur border-border/50 p-6">
                                 <h2 className="text-lg font-semibold mb-4">Programación</h2>
                                 <div className="space-y-4">
                                     <FormField
                                         control={form.control}
-                                        name="startAt"
+                                        name="cronExpression"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Hora de Inicio (HH:MM)</FormLabel>
+                                                <FormLabel>Expresión Cron</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="10:00" {...field} />
+                                                    <Input
+                                                        placeholder="0 0 * * *"
+                                                        {...field}
+                                                        className="font-mono text-xs"
+                                                    />
                                                 </FormControl>
-                                                <FormDescription>
-                                                    Formato 24 horas (ej: 14:30 para 2:30 PM)
-                                                </FormDescription>
+                                                <FormDescription>Minuto Hora Día Mes Día-semana</FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -243,21 +168,13 @@ export function CronDetailView({ cronId, onBack, onSave }: CronDetailViewProps) 
 
                                     <FormField
                                         control={form.control}
-                                        name="intervalMinutes"
+                                        name="timezone"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Intervalo (Minutos)</FormLabel>
+                                                <FormLabel>Zona Horaria</FormLabel>
                                                 <FormControl>
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="30"
-                                                        {...field}
-                                                        onChange={(e) =>
-                                                            field.onChange(Number.parseInt(e.target.value))
-                                                        }
-                                                    />
+                                                    <TimezoneSelect value={field.value} onChange={field.onChange} />
                                                 </FormControl>
-                                                <FormDescription>Minutos entre cada ejecución</FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -265,8 +182,91 @@ export function CronDetailView({ cronId, onBack, onSave }: CronDetailViewProps) 
                                 </div>
                             </Card>
 
+                            {/* Workflow Steps */}
+                            {steps.length > 0 && (
+                                <Card className="bg-card/30 backdrop-blur border-border/50 p-6">
+                                    <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                        <GitBranch className="w-4 h-4" />
+                                        Pasos del Workflow
+                                    </h2>
+                                    <div className="space-y-2">
+                                        {steps.map((step, index) => (
+                                            <motion.div
+                                                key={step.id}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                            >
+                                                <Card className="bg-muted/30 border-border/50 overflow-hidden p-0">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleStep(index)}
+                                                        className="w-full p-3 flex items-center justify-between hover:bg-muted/50 transition-colors"
+                                                    >
+                                                        <div className="text-left">
+                                                            <p className="font-medium text-sm">
+                                                                Paso {step.stepOrder}: {step.name}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {step.method} • {step.url}
+                                                            </p>
+                                                        </div>
+                                                        <ChevronDown
+                                                            className={`w-4 h-4 transition-transform ${expandedSteps.includes(index) ? 'rotate-180' : ''}`}
+                                                        />
+                                                    </button>
+
+                                                    {expandedSteps.includes(index) && (
+                                                        <motion.div
+                                                            initial={{ opacity: 0, height: 0 }}
+                                                            animate={{ opacity: 1, height: 'auto' }}
+                                                            exit={{ opacity: 0, height: 0 }}
+                                                            className="border-t border-border/50 p-3 bg-background/50 space-y-2 text-xs"
+                                                        >
+                                                            <div className="grid grid-cols-2 gap-2">
+                                                                <div>
+                                                                    <p className="text-muted-foreground">Formato</p>
+                                                                    <p className="font-mono">{step.responseFormat}</p>
+                                                                </div>
+                                                                {step.dataPath && (
+                                                                    <div>
+                                                                        <p className="text-muted-foreground">
+                                                                            Data Path
+                                                                        </p>
+                                                                        <p className="font-mono">{step.dataPath}</p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            {step.headers && step.headers !== '{}' && (
+                                                                <div>
+                                                                    <p className="text-muted-foreground">Headers</p>
+                                                                    <pre className="bg-muted/50 p-2 rounded text-xs overflow-x-auto">
+                                                                        {JSON.stringify(
+                                                                            JSON.parse(step.headers),
+                                                                            null,
+                                                                            2
+                                                                        )}
+                                                                    </pre>
+                                                                </div>
+                                                            )}
+                                                            {step.body && step.body !== '{}' && (
+                                                                <div>
+                                                                    <p className="text-muted-foreground">Body</p>
+                                                                    <pre className="bg-muted/50 p-2 rounded text-xs overflow-x-auto">
+                                                                        {JSON.stringify(JSON.parse(step.body), null, 2)}
+                                                                    </pre>
+                                                                </div>
+                                                            )}
+                                                        </motion.div>
+                                                    )}
+                                                </Card>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                </Card>
+                            )}
+
                             {/* Status */}
-                            <Card className="p-6">
+                            <Card className="bg-card/30 backdrop-blur border-border/50 p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <FormLabel className="text-base">Estado</FormLabel>

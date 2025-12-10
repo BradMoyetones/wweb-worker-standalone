@@ -8,6 +8,13 @@
       "when": 1765317011676,
       "tag": "0000_famous_doomsday",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1765394127378,
+      "tag": "0001_plain_mariko_yashida",
+      "breakpoints": true
     }
   ]
 }

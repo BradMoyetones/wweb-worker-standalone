@@ -16,6 +16,13 @@ const api = {
   onMaximizeChanged: (callback: (isMax: boolean) => void) => {
     ipcRenderer.on("maximize-changed", (_, value) => callback(value));
   },
+
+  // DATABASE DATA
+  getAllCrones: () => ipcRenderer.invoke('getAllCrones'),
+  createCron: (input) => ipcRenderer.invoke('createCron', input),
+  findCronById: (id) => ipcRenderer.invoke('findCronById', id),
+  updateCron: (id, input) => ipcRenderer.invoke('updateCron', id, input),
+  deleteCron: (id) => ipcRenderer.invoke('deleteCron', id)
 }
 
 const whatsappApi = {
@@ -71,4 +78,6 @@ if (process.contextIsolated) {
   window.electron = electronAPI
   // @ts-ignore (define in dts)
   window.api = api
+  // @ts-ignore (define in dts)
+  window.whatsappApi = whatsappApi
 }

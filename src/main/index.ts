@@ -5,6 +5,7 @@ import icon from '../../resources/icon.png?asset'
 import { installLatestVersionApp, verifyVersionApp } from '@app/config/updater'
 import { initializeClient } from '@app/lib/whatsappClient'
 import { Client } from 'whatsapp-web.js'
+import { createCron, deleteCron, findCronById, getAllCrones, updateCron } from '@app/models/crones'
 
 function createWindow(): void {
   // Create the browser window.
@@ -216,13 +217,21 @@ ipcMain.handle("whatsapp-send-message", async (event, chatId: string, content: s
 
 // DATABASE
 ipcMain.handle('getAllCrones', (_event) => {
-  // return getAllWorkflows();
+  return getAllCrones();
 });
 
 ipcMain.handle('createCron', (_event, input) => {
-  // return createWorkflow(input);
+  return createCron(input);
 });
 
 ipcMain.handle('findCronById', (_event, id) => {
-  // return findWorkflowById(id);
+  return findCronById(id);
+});
+
+ipcMain.handle('updateCron', (_event, id, input) => {
+  return updateCron(id, input);
+});
+
+ipcMain.handle('deleteCron', (_event, id) => {
+  return deleteCron(id);
 });

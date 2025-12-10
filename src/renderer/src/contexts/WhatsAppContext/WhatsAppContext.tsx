@@ -111,7 +111,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
             }}
         >
             {(status === 'loading' || status === 'qr') && (
-                <div className="bg-background fixed inset-0 z-50">
+                <div className="bg-background fixed inset-0 z-50 wavy-lines">
                     <div className="flex items-center justify-center h-full">
                         <Card className="max-w-4xl w-full">
                             <CardContent>
@@ -141,7 +141,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
             {showOverlay && (status === 'init' || status === 'authenticated' || status === 'ready') && (
                 <div
                     className={cn(
-                        "bg-background fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-500",
+                        "bg-background fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-500 wavy-lines",
                         fadeOut ? "opacity-0" : "opacity-100"
                     )}
                 >
