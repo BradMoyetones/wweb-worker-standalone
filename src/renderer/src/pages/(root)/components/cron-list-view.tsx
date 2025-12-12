@@ -2,17 +2,16 @@
 
 import type React from 'react';
 
-import { useMemo } from 'react';
-import { mockCronConfigs, mockCronWorkflowSteps } from '@/lib/mock-data';
-import type { CronConfig } from '@/lib/schemas';
+import { mockCronWorkflowSteps } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { Plus, Play, Pause, Trash2, ChevronRight, GitBranch } from 'lucide-react';
+import { FormCronConfig } from '@app/types/crone.types';
+import { useData } from '@/contexts';
 
 interface CronListViewProps {
     onSelectCron: (id: string) => void;
-    refreshTrigger: number;
     onCreateCron: () => void
 }
 
@@ -35,9 +34,9 @@ const itemVariants = {
     },
 };
 
-export function CronListView({ onSelectCron, refreshTrigger, onCreateCron }: CronListViewProps) {
+export function CronListView({ onSelectCron, onCreateCron }: CronListViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    const crons = useMemo(() => mockCronConfigs, [refreshTrigger]);
+    const {data: crons} = useData()
 
     const activeCount = crons.filter((c) => c.isActive).length;
     const totalCount = crons.length;
@@ -93,18 +92,24 @@ export function CronListView({ onSelectCron, refreshTrigger, onCreateCron }: Cro
 
                 {/* Cron List */}
                 <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid gap-4">
-                    {crons.map((cron) => (
+                    {crons.length > 0 ? crons.map((cron) => (
                         <motion.div key={cron.id} variants={itemVariants}>
                             <CronCard cron={cron} onSelect={onSelectCron} stepsCount={getStepCount(cron.id!)} />
                         </motion.div>
-                    ))}
+                    )): (
+                        <Card className='p-4'>
+                            <p className='text-center'>
+                                No hay Crons aún.
+                            </p>
+                        </Card>
+                    )}
                 </motion.div>
             </div>
         </div>
     );
 }
 
-function CronCard({ cron, onSelect, stepsCount }: { cron: CronConfig; onSelect: (id: string) => void; stepsCount: number }) {
+function CronCard({ cron, onSelect, stepsCount }: { cron: FormCronConfig; onSelect: (id: string) => void; stepsCount: number }) {
     const handleToggle = (e: React.MouseEvent) => {
         e.stopPropagation();
     };
@@ -137,7 +142,7 @@ function CronCard({ cron, onSelect, stepsCount }: { cron: CronConfig; onSelect: 
                             <span
                                 className={`text-xs px-2 py-1 rounded-full ${
                                     cron.isActive
-                                        ? 'bg-emerald-500/20 text-emerald-300'
+                                        ? 'bg-emerald-500/20 text-emerald-600'
                                         : 'bg-muted text-muted-foreground'
                                 }`}
                             >

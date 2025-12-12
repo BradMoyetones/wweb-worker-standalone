@@ -1,9 +1,10 @@
 import { getDb } from "@app/drizzle/client";
 import { cronConfigs, cronWorkflowSteps } from "@app/drizzle/schema";
+import { CreateCronInput, CronWithSteps, UpdateCronInput } from "@app/types/crone.types";
 import { eq } from "drizzle-orm";
 import { v4 as uuid } from 'uuid';
 
-async function getAllCrones() {
+async function getAllCrones(): Promise<CronWithSteps[]> {
   const db = await getDb();
 
   const configs = await db.query.cronConfigs.findMany({
@@ -15,7 +16,7 @@ async function getAllCrones() {
   return configs;
 }
 
-async function createCron(input) {
+async function createCron(input: CreateCronInput): Promise<CronWithSteps> {
   const db = await getDb();
 
   // ID para el cron
@@ -56,10 +57,10 @@ async function createCron(input) {
     with: { steps: true },
   });
 
-  return created;
+  return created!;
 }
 
-async function findCronById(id: string) {
+async function findCronById(id: string): Promise<CronWithSteps | null> {
   const db = await getDb();
 
   const config = await db.query.cronConfigs.findFirst({
@@ -72,7 +73,7 @@ async function findCronById(id: string) {
   return config ?? null;
 }
 
-async function updateCron(id: string, input) {
+async function updateCron(id: string, input: UpdateCronInput): Promise<CronWithSteps | null> {
   const db = await getDb();
 
   // Update cron_config
@@ -115,10 +116,10 @@ async function updateCron(id: string, input) {
     with: { steps: true },
   });
 
-  return updated;
+  return updated ?? null;
 }
 
-async function deleteCron(id: string) {
+async function deleteCron(id: string): Promise<{ success: boolean }> {
   const db = await getDb();
 
   await db.delete(cronConfigs).where(eq(cronConfigs.id, id));

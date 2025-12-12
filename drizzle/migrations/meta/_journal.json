@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1765317011676,
-      "tag": "0000_famous_doomsday",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1765394127378,
-      "tag": "0001_plain_mariko_yashida",
+      "when": 1765550285569,
+      "tag": "0000_green_cobalt_man",
       "breakpoints": true
     }
   ]

@@ -1,7 +1,7 @@
-import { CronConfig } from "@app/types/data";
+import { CronWithSteps } from "@app/types/crone.types";
 
 export interface DataContextType {
-    data: CronConfig[];
-    setData: React.Dispatch<React.SetStateAction<CronConfig[]>>;
+    data: CronWithSteps[];
+    setData: React.Dispatch<React.SetStateAction<CronWithSteps[]>>;
     loading: boolean;
 }

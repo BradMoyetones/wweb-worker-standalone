@@ -16,8 +16,8 @@ export const cronConfigSchema = z.object({
         ),
     timezone: z.string().min(1, 'Zona horaria requerida'),
     isActive: z.boolean(),
-    createdAt: z.date().optional(),
-    updatedAt: z.date().optional(),
+    createdAt: z.number().optional(),
+    updatedAt: z.number().optional(),
 });
 
 export const cronWorkflowStepSchema = z.object({
@@ -31,8 +31,5 @@ export const cronWorkflowStepSchema = z.object({
     body: z.string().optional(), // JSON.stringify
     responseFormat: z.enum(['json', 'text']),
     dataPath: z.string().optional(),
-    createdAt: z.date().optional(),
+    createdAt: z.number().optional(),
 });
-
-export type CronConfig = z.infer<typeof cronConfigSchema>;
-export type CronWorkflowStep = z.infer<typeof cronWorkflowStepSchema>;

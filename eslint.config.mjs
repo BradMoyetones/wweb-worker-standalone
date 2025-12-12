@@ -63,7 +63,13 @@ export default defineConfig(
       // Desactivar la regla 'explicit-function-return-type' de TypeScript
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-implicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': "warn"
+      '@typescript-eslint/no-unused-vars': [
+        "warn",
+        {
+          "argsIgnorePattern": "^_",
+          "varsIgnorePattern": "^_"
+        }
+      ]
     }
   },
 )

@@ -1,4 +1,4 @@
-import type { CronConfig, CronWorkflowStep } from './schemas';
+import type { CronConfig, CronWorkflowStep } from '../../../types/zod.types';
 
 export const mockCronConfigs: CronConfig[] = [
     {

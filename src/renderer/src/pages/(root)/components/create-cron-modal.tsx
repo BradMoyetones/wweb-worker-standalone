@@ -3,38 +3,27 @@
 import { useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { ChevronDown, Plus, X } from 'lucide-react';
-import { cronConfigSchema, cronWorkflowStepSchema } from '@/lib/schemas';
 import { TimezoneSelect } from './timezone-select';
 import { KeyValueEditor } from './key-value-editor';
-import type { CronConfig, CronWorkflowStep } from '@/lib/schemas';
-
-// Schema para creación (sin id, createdAt, updatedAt)
-const createCronSchema = cronConfigSchema.omit({ id: true, createdAt: true, updatedAt: true }).extend({
-    steps: z.array(cronWorkflowStepSchema.omit({ id: true, cronConfigId: true, createdAt: true })),
-});
-
-type CreateCronFormData = z.infer<typeof createCronSchema>;
+import { CreateCronFormData, createCronSchema } from '@app/types/crone.types';
+import { toast } from 'sonner';
+import { useData } from '@/contexts';
 
 interface CreateCronModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (
-        data: Omit<CronConfig, 'id' | 'createdAt' | 'updatedAt'> & {
-            steps: Omit<CronWorkflowStep, 'id' | 'cronConfigId' | 'createdAt'>[];
-        }
-    ) => void;
 }
 
-export function CreateCronModal({ isOpen, onClose, onSubmit }: CreateCronModalProps) {
+export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [expandedStep, setExpandedStep] = useState<number | null>(0);
+    const {setData} = useData()
 
     const {
         register,
@@ -74,8 +63,15 @@ export function CreateCronModal({ isOpen, onClose, onSubmit }: CreateCronModalPr
 
     const handleFormSubmit = async (data: CreateCronFormData) => {
         setIsSubmitting(true);
-        console.log('[v0] Nueva configuración de crone creada:', data);
-        onSubmit(data);
+        toast.promise(window.api.createCron(data), {
+            loading: 'Creando Cron...',
+            success: (data) => {
+                setData((prev) => [data, ...prev])
+
+                return `Cron creado con éxito.`;
+            },
+            error: 'Error.',
+        });
         reset();
         setIsSubmitting(false);
         onClose();

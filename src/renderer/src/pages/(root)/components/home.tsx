@@ -4,18 +4,11 @@ import { useState } from 'react';
 import { CronListView } from './cron-list-view';
 import { CronDetailView } from './cron-detail-view';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CronConfig } from '@/lib/schemas';
 import { CreateCronModal } from './create-cron-modal';
 
 export default function Home() {
     const [selectedCronId, setSelectedCronId] = useState<string | null>(null);
-    const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-
-    const handleCreateCron = (data: Omit<CronConfig, "id" | "createdAt" | "updatedAt">) => {
-        console.log("Modal submit recibido:", data)
-        setRefreshTrigger((prev) => prev + 1)
-    }
 
     return (
         <>
@@ -31,7 +24,6 @@ export default function Home() {
                     >
                         <CronListView
                             onSelectCron={setSelectedCronId}
-                            refreshTrigger={refreshTrigger}
                             onCreateCron={() => setIsCreateModalOpen(true)}
                         />
                     </motion.div>
@@ -46,7 +38,6 @@ export default function Home() {
                         <CronDetailView
                             cronId={selectedCronId}
                             onBack={() => setSelectedCronId(null)}
-                            onSave={() => setRefreshTrigger((prev) => prev + 1)}
                         />
                     </motion.div>
                 )}
@@ -55,7 +46,6 @@ export default function Home() {
         <CreateCronModal
             isOpen={isCreateModalOpen}
             onClose={() => setIsCreateModalOpen(false)}
-            onSubmit={handleCreateCron}
         />
         </>
     );

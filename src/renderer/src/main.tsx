@@ -12,7 +12,8 @@ import { RouterProvider } from 'react-router';
 import router from './router';
 import { ActiveThemeProvider } from './components/active-theme';
 import { VersionProvider } from './contexts/VersionContext';
-import { WhatsAppProvider } from './contexts';
+import { DataProvider, WhatsAppProvider } from './contexts';
+import { Toaster } from './components/ui/sonner';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -20,7 +21,10 @@ createRoot(document.getElementById('root')!).render(
       <VersionProvider>
         <WhatsAppProvider>
           <ActiveThemeProvider>
-            <RouterProvider router={router} />
+            <DataProvider>
+              <RouterProvider router={router} />
+              <Toaster />
+            </DataProvider>
           </ActiveThemeProvider>
         </WhatsAppProvider>
       </VersionProvider>

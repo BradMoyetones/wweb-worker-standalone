@@ -1,8 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { mockCronConfigs, mockCronWorkflowSteps } from '@/lib/mock-data';
-import { type CronConfig, cronConfigSchema } from '@/lib/schemas';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -13,24 +11,44 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { motion } from 'motion/react';
 import { ArrowLeft, Save, AlertCircle, ChevronDown, GitBranch } from 'lucide-react';
 import { TimezoneSelect } from './timezone-select';
+import { cronConfigSchema } from '@app/types/zod.types';
+import { CronWithSteps, FormCronConfig, UpdateCronInput } from '@app/types/crone.types';
+import { useData } from '@/contexts';
+import { toast } from 'sonner';
 
 interface CronDetailViewProps {
     cronId: string;
     onBack: () => void;
-    onSave: () => void;
 }
 
-export function CronDetailView({ cronId, onBack, onSave }: CronDetailViewProps) {
-    const cron = useMemo(() => mockCronConfigs.find((c) => c.id === cronId), [cronId]);
+function mapCronToForm(cron?: CronWithSteps): FormCronConfig | undefined {
+    if (!cron) return undefined;
 
-    const steps = useMemo(() => mockCronWorkflowSteps.filter((s) => s.cronConfigId === cronId), [cronId]);
+    return {
+        id: cron.id,
+        groupName: cron.groupName ?? '',
+        name: cron.name ?? '',
+        description: cron.description ?? '',
+        cronExpression: cron.cronExpression ?? '',
+        timezone: cron.timezone ?? 'America/Bogota',
+        isActive: cron.isActive ? true : false,
+        createdAt: cron.createdAt ? Number(cron.createdAt) : undefined,
+        updatedAt: cron.updatedAt ? Number(cron.updatedAt) : undefined,
+    };
+}
+
+export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
+    const { data, setData } = useData();
+    const cron = data.find((c) => c.id === cronId);
+
+    const steps = cron?.steps ?? [];
 
     const [isSaving, setIsSaving] = useState(false);
     const [expandedSteps, setExpandedSteps] = useState<number[]>([]);
 
-    const form = useForm<CronConfig>({
+    const form = useForm<FormCronConfig>({
         resolver: zodResolver(cronConfigSchema),
-        defaultValues: cron || {
+        defaultValues: mapCronToForm(cron) || {
             groupName: '',
             name: '',
             timezone: 'America/Bogota',
@@ -39,12 +57,22 @@ export function CronDetailView({ cronId, onBack, onSave }: CronDetailViewProps) 
         },
     });
 
-    const onSubmit = async (data: CronConfig) => {
+    const onSubmit = async (data: UpdateCronInput) => {
         setIsSaving(true);
         await new Promise((resolve) => setTimeout(resolve, 800));
+        toast.promise(window.api.updateCron(cron?.id ?? '', data), {
+            loading: 'Creando Cron...',
+            success: (data) => {
+                if (!data) return 'Error: respuesta vacía';
+
+                setData((prev) => prev.map((item) => (item.id === data.id ? data : item)));
+
+                return `Cron actualizado con éxito.`;
+            },
+            error: 'Error.',
+        });
         console.log('Guardando configuración:', data);
         setIsSaving(false);
-        onSave();
         onBack();
     };
 
@@ -83,7 +111,7 @@ export function CronDetailView({ cronId, onBack, onSave }: CronDetailViewProps) 
                     <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{cron.name}</h1>
                     <p className="text-muted-foreground mt-2">
                         {cron.groupName} • Última actualización:{' '}
-                        {cron.updatedAt?.toLocaleDateString('es-ES') ?? 'No actualizado'}
+                        {new Date(cron.updatedAt)?.toLocaleDateString('es-ES') ?? 'No actualizado'}
                     </p>
                 </motion.div>
 

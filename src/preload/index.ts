@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import { Chat, ClientInfo, Contact, Message } from 'whatsapp-web.js';
+import { CreateCronInput, CronWithSteps, UpdateCronInput } from '@app/types/crone.types';
 
 // Custom APIs for renderer
 const api = {
@@ -18,11 +19,11 @@ const api = {
   },
 
   // DATABASE DATA
-  getAllCrones: () => ipcRenderer.invoke('getAllCrones'),
-  createCron: (input) => ipcRenderer.invoke('createCron', input),
-  findCronById: (id) => ipcRenderer.invoke('findCronById', id),
-  updateCron: (id, input) => ipcRenderer.invoke('updateCron', id, input),
-  deleteCron: (id) => ipcRenderer.invoke('deleteCron', id)
+  getAllCrones: (): Promise<CronWithSteps[]> => ipcRenderer.invoke('getAllCrones'),
+  createCron: (input: CreateCronInput): Promise<CronWithSteps> => ipcRenderer.invoke('createCron', input),
+  findCronById: (id: string): Promise<CronWithSteps | null> => ipcRenderer.invoke('findCronById', id),
+  updateCron: (id: string, input: UpdateCronInput): Promise<CronWithSteps | null> => ipcRenderer.invoke('updateCron', id, input),
+  deleteCron: (id: string): Promise<{ success: boolean }> => ipcRenderer.invoke('deleteCron', id)
 }
 
 const whatsappApi = {
