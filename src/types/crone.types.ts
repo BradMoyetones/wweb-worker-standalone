@@ -46,7 +46,15 @@ export const createCronSchema = cronConfigSchema
         ),
     });
 
+export const updateCronSchema = cronConfigSchema
+    .extend({
+        steps: z.array(
+            cronWorkflowStepSchema
+        ),
+    });
+
 export type CreateCronFormData = z.infer<typeof createCronSchema>;
+export type UpdateCronFormData = z.infer<typeof updateCronSchema>;
 
 
 // =============================
@@ -56,7 +64,4 @@ export type CreateCronFormData = z.infer<typeof createCronSchema>;
 export type CronWithSteps = DBCronConfig & {
     steps: DBCronWorkflowStep[];
 };
-
-export type CreateCronInput = CreateCronFormData;
-export type UpdateCronInput = CreateCronFormData;
 

@@ -1,6 +1,6 @@
 import { getDb } from "@app/drizzle/client";
 import { cronConfigs, cronWorkflowSteps } from "@app/drizzle/schema";
-import { CreateCronInput, CronWithSteps, UpdateCronInput } from "@app/types/crone.types";
+import { CreateCronFormData, CronWithSteps, UpdateCronFormData } from "@app/types/crone.types";
 import { eq } from "drizzle-orm";
 import { v4 as uuid } from 'uuid';
 
@@ -16,7 +16,7 @@ async function getAllCrones(): Promise<CronWithSteps[]> {
   return configs;
 }
 
-async function createCron(input: CreateCronInput): Promise<CronWithSteps> {
+async function createCron(input: CreateCronFormData): Promise<CronWithSteps> {
   const db = await getDb();
 
   // ID para el cron
@@ -73,7 +73,7 @@ async function findCronById(id: string): Promise<CronWithSteps | null> {
   return config ?? null;
 }
 
-async function updateCron(id: string, input: UpdateCronInput): Promise<CronWithSteps | null> {
+async function updateCron(id: string, input: UpdateCronFormData): Promise<CronWithSteps | null> {
   const db = await getDb();
 
   // Update cron_config

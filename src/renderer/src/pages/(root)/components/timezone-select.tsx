@@ -29,7 +29,7 @@ export function TimezoneSelect({ value, onChange }: TimezoneSelectProps) {
                     onFocus={() => setIsOpen(true)}
                     className="bg-muted/50 border-border/50 focus:border-primary"
                 />
-                <Button size="sm" variant="outline" onClick={() => setIsOpen(!isOpen)} className="px-3">
+                <Button type="button" size="sm" variant="outline" onClick={() => setIsOpen(!isOpen)} className="px-3">
                     <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </Button>
             </div>
@@ -59,6 +59,7 @@ export function TimezoneSelect({ value, onChange }: TimezoneSelectProps) {
                                     filtered.map((tz) => (
                                         <button
                                             key={tz}
+                                            type='button'
                                             onClick={() => {
                                                 onChange(tz);
                                                 setIsOpen(false);

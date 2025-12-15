@@ -10,6 +10,7 @@ import { Outlet } from "react-router";
 import Advanced from "./components/settings/Advanced";
 import Theming from "./components/settings/Theming";
 import Me from "./components/settings/Me";
+import Versions from "@/components/Versions";
 
 export default function RootLayout() {
     const [isOpen, setIsOpen] = useState(false)
@@ -36,23 +37,20 @@ export default function RootLayout() {
                 </SectionContent>
             </Section>
 
-            <SidebarContent className="max-w-screen">
-                <div className="flex flex-col gap-4">
-                    <div className="flex justify-between items-center">
-                        <span className="text-sm font-semibold text-muted-foreground">Menu</span>
-                        <AnimateIcon animate>
-                            <Button 
-                                variant={"ghost"} 
-                                size={"icon"} 
-                                onClick={() => setIsOpen(false)}
-                            >
-                                <Menu className={"size-6"} />
-                            </Button>
-                        </AnimateIcon>
-                    </div>
-
-                    <Separator />
-
+            <SidebarContent className="max-w-screen overflow-y-auto gap-0">
+                <div className="flex justify-between items-center sticky -top-6 bg-background/10 backdrop-blur-xl border-b -mx-6 -mt-6 px-6 py-4">
+                    <span className="text-sm font-semibold text-muted-foreground">Menu</span>
+                    <AnimateIcon animate>
+                        <Button 
+                            variant={"ghost"} 
+                            size={"icon"} 
+                            onClick={() => setIsOpen(false)}
+                        >
+                            <Menu className={"size-6"} />
+                        </Button>
+                    </AnimateIcon>
+                </div>
+                <div className="flex flex-col gap-4 mt-4">
                     <div className="columns-1 md:columns-2 space-x-4 space-y-4 [&>div]:break-inside-avoid-column">
                         {/* Settings Section */}
                         <Me />
@@ -60,6 +58,8 @@ export default function RootLayout() {
                         <Theming />
 
                         <Advanced />
+
+                        <Versions></Versions>
                     </div>
 
                     {/* Spacer */}

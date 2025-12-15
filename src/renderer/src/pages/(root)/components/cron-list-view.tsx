@@ -5,27 +5,18 @@ import type React from 'react';
 import { mockCronWorkflowSteps } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'motion/react';
 import { Plus, Play, Pause, Trash2, ChevronRight, GitBranch } from 'lucide-react';
-import { FormCronConfig } from '@app/types/crone.types';
+import { CronWithSteps } from '@app/types/crone.types';
 import { useData } from '@/contexts';
+import { toast } from 'sonner';
 
 interface CronListViewProps {
     onSelectCron: (id: string) => void;
     onCreateCron: () => void
 }
 
-const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-        opacity: 1,
-        transition: {
-            staggerChildren: 0.1,
-        },
-    },
-};
-
-const itemVariants = {
+const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
         opacity: 1,
@@ -35,7 +26,6 @@ const itemVariants = {
 };
 
 export function CronListView({ onSelectCron, onCreateCron }: CronListViewProps) {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     const {data: crons} = useData()
 
     const activeCount = crons.filter((c) => c.isActive).length;
@@ -91,9 +81,16 @@ export function CronListView({ onSelectCron, onCreateCron }: CronListViewProps) 
                 </motion.div>
 
                 {/* Cron List */}
-                <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid gap-4">
+                <div className="grid gap-4">
                     {crons.length > 0 ? crons.map((cron) => (
-                        <motion.div key={cron.id} variants={itemVariants}>
+                        <motion.div 
+                            layout
+                            key={cron.id+"-list-item"} 
+                            variants={itemVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit={{ opacity: 0, y: -20 }}
+                        >
                             <CronCard cron={cron} onSelect={onSelectCron} stepsCount={getStepCount(cron.id!)} />
                         </motion.div>
                     )): (
@@ -103,19 +100,33 @@ export function CronListView({ onSelectCron, onCreateCron }: CronListViewProps) 
                             </p>
                         </Card>
                     )}
-                </motion.div>
+                </div>
             </div>
         </div>
     );
 }
 
-function CronCard({ cron, onSelect, stepsCount }: { cron: FormCronConfig; onSelect: (id: string) => void; stepsCount: number }) {
+function CronCard({ cron, onSelect, stepsCount }: { cron: CronWithSteps; onSelect: (id: string) => void; stepsCount: number }) {
+    const {setData} = useData()
     const handleToggle = (e: React.MouseEvent) => {
         e.stopPropagation();
     };
 
-    const handleDelete = (e: React.MouseEvent) => {
+    const handleDelete = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
+        try{
+            const deleted = await window.api.deleteCron(id)
+    
+            if(deleted.success){
+                setData((data) => data.filter((cron) => cron.id !== id))
+                toast.success("Cron eliminado éxitosamente")
+            }else {
+                toast.error("Error eliminado Cron")
+            }
+
+        }catch{
+            toast.error("Error eliminado Cron")
+        }
     };
 
     return (
@@ -165,7 +176,7 @@ function CronCard({ cron, onSelect, stepsCount }: { cron: FormCronConfig; onSele
                         <Button
                             variant="ghost"
                             size="icon"
-                            onClick={handleDelete}
+                            onClick={(e) => handleDelete(e, cron.id ?? "")}
                             className="hover:bg-red-500/10 hover:text-red-500"
                         >
                             <Trash2 className="w-4 h-4" />

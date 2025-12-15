@@ -50,12 +50,21 @@ export const cronWorkflowSteps = sqliteTable('cron_workflow_steps', {
     // REQUEST CONFIG
     method: text('method').notNull().default('POST'),
     url: text('url').notNull(),
-    headers: text('headers'), // JSON.stringify({...})
-    body: text('body'), // JSON.stringify({...}) - puede usar {{previousStep.data}}
+    headers: text('headers'), // JSON: { "Cookie": "{{cookies.session}}" }
+    bodyType: text('body_type').default('json'), // json | urlencoded | form | none
+    body: text('body'), // JSON.stringify({...}) - puede usar {{previousStep.data}} --- JSON: { "user": "{{env.USER}}" }
+
+    requestOptions: text('request_options'), // JSON: { "redirect": "manual" }
 
     // PROCESAMIENTO DE RESPUESTA
     responseFormat: text('response_format').default('text'), // json, text
     dataPath: text('data_path'), // ej: "data.count" - qué extraer del response
+
+    // ======================
+    // EXTRACTION (CLAVE)
+    // ======================
+    extract: text('extract'),
+    // JSON declarativo (ver ejemplo abajo)
 
     createdAt: integer('created_at')
         .notNull()

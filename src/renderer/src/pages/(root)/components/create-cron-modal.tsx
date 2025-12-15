@@ -14,6 +14,7 @@ import { KeyValueEditor } from './key-value-editor';
 import { CreateCronFormData, createCronSchema } from '@app/types/crone.types';
 import { toast } from 'sonner';
 import { useData } from '@/contexts';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 interface CreateCronModalProps {
     isOpen: boolean;
@@ -23,17 +24,9 @@ interface CreateCronModalProps {
 export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [expandedStep, setExpandedStep] = useState<number | null>(0);
-    const {setData} = useData()
+    const { setData } = useData();
 
-    const {
-        register,
-        handleSubmit,
-        control,
-        watch,
-        formState: { errors },
-        reset,
-        setValue,
-    } = useForm<CreateCronFormData>({
+    const form = useForm<CreateCronFormData>({
         resolver: zodResolver(createCronSchema),
         defaultValues: {
             timezone: 'America/Bogota',
@@ -57,7 +50,7 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
         append: appendStep,
         remove: removeStep,
     } = useFieldArray({
-        control,
+        control: form.control,
         name: 'steps',
     });
 
@@ -66,18 +59,18 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
         toast.promise(window.api.createCron(data), {
             loading: 'Creando Cron...',
             success: (data) => {
-                setData((prev) => [data, ...prev])
+                console.log("DATA CREADA", data);
+                
+                setData((prev) => [data, ...prev]);
 
                 return `Cron creado con éxito.`;
             },
             error: 'Error.',
         });
-        reset();
+        form.reset();
         setIsSubmitting(false);
         onClose();
     };
-
-    const timezone = watch('timezone');
 
     return (
         <AnimatePresence>
@@ -120,283 +113,303 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
                             </div>
 
                             {/* Form */}
-                            <form onSubmit={handleSubmit(handleFormSubmit)} className="p-6 space-y-6">
-                                {/* Nombre del Grupo */}
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.05 }}
-                                >
-                                    <h3 className="text-lg font-semibold mb-4">Información General</h3>
+                            <Form {...form}>
+                                <form onSubmit={form.handleSubmit(handleFormSubmit)} className="p-6 space-y-6">
+                                    {/* Nombre del Grupo */}
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.05 }}
+                                    >
+                                        <h3 className="text-lg font-semibold mb-4">Información General</h3>
 
-                                    <div className="space-y-4">
-                                        <div>
-                                            <Label htmlFor="groupName" className="text-sm font-medium">
-                                                Nombre del Grupo
-                                            </Label>
-                                            <Input
-                                                id="groupName"
-                                                placeholder="ej: Workers WhatsApp Prod"
-                                                {...register('groupName')}
-                                                className="mt-2 bg-muted/50 border-border/50 focus:border-primary"
+                                        <div className="space-y-4">
+                                            <FormField
+                                                control={form.control}
+                                                name="groupName"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Nombre del Grupo</FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                placeholder="ej: PJD SERVICIO Y EVENTOS"
+                                                                {...field}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
                                             />
-                                            {errors.groupName && (
-                                                <p className="text-xs text-red-500 mt-1">{errors.groupName.message}</p>
-                                            )}
-                                        </div>
 
-                                        <div>
-                                            <Label htmlFor="name" className="text-sm font-medium">
-                                                Nombre Descriptivo
-                                            </Label>
-                                            <Input
-                                                id="name"
-                                                placeholder="ej: Contador de Visitantes"
-                                                {...register('name')}
-                                                className="mt-2 bg-muted/50 border-border/50 focus:border-primary"
+                                            <FormField
+                                                control={form.control}
+                                                name="name"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Nombre Descriptivo</FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                placeholder="ej: Contador de Visitantes"
+                                                                {...field}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
                                             />
-                                            {errors.name && (
-                                                <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>
-                                            )}
-                                        </div>
 
-                                        <div>
-                                            <Label htmlFor="description" className="text-sm font-medium">
-                                                Descripción (Opcional)
-                                            </Label>
-                                            <Input
-                                                id="description"
-                                                placeholder="¿Qué hace este workflow?"
-                                                {...register('description')}
-                                                className="mt-2 bg-muted/50 border-border/50 focus:border-primary"
+                                            <FormField
+                                                control={form.control}
+                                                name="description"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Descripción (Opcional)</FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                placeholder="¿Qué hace este workflow?"
+                                                                {...field}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
                                             />
                                         </div>
-                                    </div>
-                                </motion.div>
+                                    </motion.div>
 
-                                {/* Programación */}
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.1 }}
-                                >
-                                    <h3 className="text-lg font-semibold mb-4">Programación</h3>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <Label htmlFor="cronExpression" className="text-sm font-medium">
-                                                Expresión Cron
-                                            </Label>
-                                            <Input
-                                                id="cronExpression"
-                                                placeholder="0 0 * * * (Medianoche diariamente)"
-                                                {...register('cronExpression')}
-                                                className="mt-2 bg-muted/50 border-border/50 focus:border-primary font-mono text-xs"
+                                    {/* Programación */}
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.1 }}
+                                    >
+                                        <h3 className="text-lg font-semibold mb-4">Programación</h3>
+                                        <div className="space-y-4">
+                                            <FormField
+                                                control={form.control}
+                                                name="cronExpression"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Expresión Cron</FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                placeholder="0 0 * * * (Medianoche diariamente)"
+                                                                {...field}
+                                                            />
+                                                        </FormControl>
+                                                        <FormDescription>
+                                                            Formato: minuto hora día mes día-semana
+                                                        </FormDescription>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
                                             />
-                                            {errors.cronExpression && (
-                                                <p className="text-xs text-red-500 mt-1">
-                                                    {errors.cronExpression.message}
-                                                </p>
-                                            )}
-                                            <p className="text-xs text-muted-foreground mt-2">
-                                                Formato: minuto hora día mes día-semana
-                                            </p>
-                                        </div>
 
-                                        <div>
-                                            <Label className="text-sm font-medium mb-2 block">Zona Horaria</Label>
-                                            <TimezoneSelect
-                                                value={timezone}
-                                                onChange={(val) => setValue('timezone', val)}
+                                            <FormField
+                                                control={form.control}
+                                                name="timezone"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Zona Horaria</FormLabel>
+                                                        <FormControl>
+                                                            <TimezoneSelect
+                                                                {...field}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
                                             />
-                                            {errors.timezone && (
-                                                <p className="text-xs text-red-500 mt-1">{errors.timezone.message}</p>
-                                            )}
                                         </div>
-                                    </div>
-                                </motion.div>
+                                    </motion.div>
 
-                                {/* Workflow Steps */}
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.15 }}
-                                >
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-lg font-semibold">Pasos del Workflow</h3>
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => {
-                                                appendStep({
-                                                    stepOrder: stepFields.length + 1,
-                                                    name: '',
-                                                    method: 'POST',
-                                                    url: '',
-                                                    headers: '{}',
-                                                    body: '{}',
-                                                    responseFormat: 'text',
-                                                });
-                                            }}
-                                            className="gap-1"
-                                        >
-                                            <Plus className="w-3 h-3" />
-                                            Agregar Paso
-                                        </Button>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        {stepFields.map((field, index) => (
-                                            <motion.div
-                                                key={field.id}
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
+                                    {/* Workflow Steps */}
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.15 }}
+                                    >
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h3 className="text-lg font-semibold">Pasos del Workflow</h3>
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => {
+                                                    appendStep({
+                                                        stepOrder: stepFields.length + 1,
+                                                        name: '',
+                                                        method: 'POST',
+                                                        url: '',
+                                                        headers: '{}',
+                                                        body: '{}',
+                                                        responseFormat: 'text',
+                                                    });
+                                                }}
+                                                className="gap-1"
                                             >
-                                                <Card className="bg-muted/30 border-border/50 overflow-hidden p-0 gap-0">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            setExpandedStep(expandedStep === index ? null : index)
-                                                        }
-                                                        className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors"
-                                                    >
-                                                        <div className="text-left">
-                                                            <p className="font-medium text-sm">
-                                                                Paso {index + 1}:{' '}
-                                                                {watch(`steps.${index}.name`) || 'Sin nombre'}
-                                                            </p>
-                                                            <p className="text-xs text-muted-foreground">
-                                                                {watch(`steps.${index}.method`)} •{' '}
-                                                                {watch(`steps.${index}.url`)}
-                                                            </p>
-                                                        </div>
-                                                        <ChevronDown
-                                                            className={`w-4 h-4 transition-transform ${expandedStep === index ? 'rotate-180' : ''}`}
-                                                        />
-                                                    </button>
+                                                <Plus className="w-3 h-3" />
+                                                Agregar Paso
+                                            </Button>
+                                        </div>
 
-                                                    <AnimatePresence>
-                                                        {expandedStep === index && (
-                                                            <motion.div
-                                                                initial={{ opacity: 0, height: 0 }}
-                                                                animate={{ opacity: 1, height: 'auto' }}
-                                                                exit={{ opacity: 0, height: 0 }}
-                                                                className="border-t border-border/50 p-4 bg-background/50 space-y-4"
-                                                            >
-                                                                <div className="grid md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            {stepFields.map((field, index) => (
+                                                <motion.div
+                                                    key={field.id}
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                >
+                                                    <Card className="bg-muted/30 border-border/50 overflow-hidden p-0 gap-0">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                setExpandedStep(expandedStep === index ? null : index)
+                                                            }
+                                                            className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors"
+                                                        >
+                                                            <div className="text-left">
+                                                                <p className="font-medium text-sm">
+                                                                    Paso {index + 1}:{' '}
+                                                                    {form.watch(`steps.${index}.name`) || 'Sin nombre'}
+                                                                </p>
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    {form.watch(`steps.${index}.method`)} •{' '}
+                                                                    {form.watch(`steps.${index}.url`)}
+                                                                </p>
+                                                            </div>
+                                                            <ChevronDown
+                                                                className={`w-4 h-4 transition-transform ${expandedStep === index ? 'rotate-180' : ''}`}
+                                                            />
+                                                        </button>
+
+                                                        <AnimatePresence>
+                                                            {expandedStep === index && (
+                                                                <motion.div
+                                                                    initial={{ opacity: 0, height: 0 }}
+                                                                    animate={{ opacity: 1, height: 'auto' }}
+                                                                    exit={{ opacity: 0, height: 0 }}
+                                                                    className="border-t border-border/50 p-4 bg-background/50 space-y-4"
+                                                                >
+                                                                    <div className="grid md:grid-cols-2 gap-4">
+                                                                        <div>
+                                                                            <Label className="text-xs font-medium">
+                                                                                Nombre del Paso
+                                                                            </Label>
+                                                                            <Input
+                                                                                placeholder="ej: Login"
+                                                                                {...form.register(`steps.${index}.name`)}
+                                                                                className="mt-2 h-8 text-sm bg-muted/50"
+                                                                            />
+                                                                            {form.formState.errors.steps?.[index]?.name && (
+                                                                                <p className="text-xs text-red-500 mt-1">
+                                                                                    {form.formState.errors.steps[index]?.name?.message}
+                                                                                </p>
+                                                                            )}
+                                                                        </div>
+
+                                                                        <div>
+                                                                            <Label className="text-xs font-medium">
+                                                                                Método HTTP
+                                                                            </Label>
+                                                                            <select
+                                                                                {...form.register(`steps.${index}.method`)}
+                                                                                className="w-full mt-2 h-8 rounded-md border border-border/50 bg-muted/50 text-sm px-2"
+                                                                            >
+                                                                                <option value="GET">GET</option>
+                                                                                <option value="POST">POST</option>
+                                                                                <option value="PUT">PUT</option>
+                                                                                <option value="DELETE">DELETE</option>
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+
                                                                     <div>
                                                                         <Label className="text-xs font-medium">
-                                                                            Nombre del Paso
+                                                                            URL
                                                                         </Label>
                                                                         <Input
-                                                                            placeholder="ej: Login"
-                                                                            {...register(`steps.${index}.name`)}
+                                                                            placeholder="https://api.example.com/endpoint"
+                                                                            {...form.register(`steps.${index}.url`)}
                                                                             className="mt-2 h-8 text-sm bg-muted/50"
                                                                         />
-                                                                        {errors.steps?.[index]?.name && (
+                                                                        {form.formState.errors.steps?.[index]?.url && (
                                                                             <p className="text-xs text-red-500 mt-1">
-                                                                                {errors.steps[index]?.name?.message}
+                                                                                {form.formState.errors.steps[index]?.url?.message}
                                                                             </p>
                                                                         )}
                                                                     </div>
 
-                                                                    <div>
-                                                                        <Label className="text-xs font-medium">
-                                                                            Método HTTP
-                                                                        </Label>
-                                                                        <select
-                                                                            {...register(`steps.${index}.method`)}
-                                                                            className="w-full mt-2 h-8 rounded-md border border-border/50 bg-muted/50 text-sm px-2"
-                                                                        >
-                                                                            <option value="GET">GET</option>
-                                                                            <option value="POST">POST</option>
-                                                                            <option value="PUT">PUT</option>
-                                                                            <option value="DELETE">DELETE</option>
-                                                                        </select>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div>
-                                                                    <Label className="text-xs font-medium">URL</Label>
-                                                                    <Input
-                                                                        placeholder="https://api.example.com/endpoint"
-                                                                        {...register(`steps.${index}.url`)}
-                                                                        className="mt-2 h-8 text-sm bg-muted/50"
+                                                                    <KeyValueEditor
+                                                                        label="Headers"
+                                                                        value={form.watch(`steps.${index}.headers`)}
+                                                                        onChange={(val) =>
+                                                                            form.setValue(`steps.${index}.headers`, val)
+                                                                        }
+                                                                        placeholder="Agregar headers HTTP"
                                                                     />
-                                                                    {errors.steps?.[index]?.url && (
-                                                                        <p className="text-xs text-red-500 mt-1">
-                                                                            {errors.steps[index]?.url?.message}
-                                                                        </p>
-                                                                    )}
-                                                                </div>
 
-                                                                <KeyValueEditor
-                                                                    label="Headers"
-                                                                    value={watch(`steps.${index}.headers`)}
-                                                                    onChange={(val) =>
-                                                                        setValue(`steps.${index}.headers`, val)
-                                                                    }
-                                                                    placeholder="Agregar headers HTTP"
-                                                                />
+                                                                    <KeyValueEditor
+                                                                        label="Body (Key-Value)"
+                                                                        value={form.watch(`steps.${index}.body`)}
+                                                                        onChange={(val) =>
+                                                                            form.setValue(`steps.${index}.body`, val)
+                                                                        }
+                                                                        placeholder="Agregar parámetros del body"
+                                                                    />
 
-                                                                <KeyValueEditor
-                                                                    label="Body (Key-Value)"
-                                                                    value={watch(`steps.${index}.body`)}
-                                                                    onChange={(val) =>
-                                                                        setValue(`steps.${index}.body`, val)
-                                                                    }
-                                                                    placeholder="Agregar parámetros del body"
-                                                                />
+                                                                    <div className="grid md:grid-cols-2 gap-4">
+                                                                        <div>
+                                                                            <Label className="text-xs font-medium">
+                                                                                Formato de Respuesta
+                                                                            </Label>
+                                                                            <select
+                                                                                {...form.register(
+                                                                                    `steps.${index}.responseFormat`
+                                                                                )}
+                                                                                className="w-full mt-2 h-8 rounded-md border border-border/50 bg-muted/50 text-sm px-2"
+                                                                            >
+                                                                                <option value="json">JSON</option>
+                                                                                <option value="text">
+                                                                                    Texto Plano
+                                                                                </option>
+                                                                            </select>
+                                                                        </div>
 
-                                                                <div className="grid md:grid-cols-2 gap-4">
-                                                                    <div>
-                                                                        <Label className="text-xs font-medium">
-                                                                            Formato de Respuesta
-                                                                        </Label>
-                                                                        <select
-                                                                            {...register(
-                                                                                `steps.${index}.responseFormat`
-                                                                            )}
-                                                                            className="w-full mt-2 h-8 rounded-md border border-border/50 bg-muted/50 text-sm px-2"
+                                                                        <div>
+                                                                            <Label className="text-xs font-medium">
+                                                                                Data Path (Opcional)
+                                                                            </Label>
+                                                                            <Input
+                                                                                placeholder="ej: data.count"
+                                                                                {...form.register(`steps.${index}.dataPath`)}
+                                                                                className="mt-2 h-8 text-sm bg-muted/50"
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {stepFields.length > 1 && (
+                                                                        <Button
+                                                                            type="button"
+                                                                            size="sm"
+                                                                            variant="destructive"
+                                                                            onClick={() => removeStep(index)}
+                                                                            className="w-full gap-2"
                                                                         >
-                                                                            <option value="json">JSON</option>
-                                                                            <option value="text">Texto Plano</option>
-                                                                        </select>
-                                                                    </div>
-
-                                                                    <div>
-                                                                        <Label className="text-xs font-medium">
-                                                                            Data Path (Opcional)
-                                                                        </Label>
-                                                                        <Input
-                                                                            placeholder="ej: data.count"
-                                                                            {...register(`steps.${index}.dataPath`)}
-                                                                            className="mt-2 h-8 text-sm bg-muted/50"
-                                                                        />
-                                                                    </div>
-                                                                </div>
-
-                                                                {stepFields.length > 1 && (
-                                                                    <Button
-                                                                        type="button"
-                                                                        size="sm"
-                                                                        variant="destructive"
-                                                                        onClick={() => removeStep(index)}
-                                                                        className="w-full gap-2"
-                                                                    >
-                                                                        <X className="w-3 h-3" />
-                                                                        Eliminar Paso
-                                                                    </Button>
-                                                                )}
-                                                            </motion.div>
-                                                        )}
-                                                    </AnimatePresence>
-                                                </Card>
-                                            </motion.div>
-                                        ))}
-                                    </div>
-                                </motion.div>
-                            </form>
+                                                                            <X className="w-3 h-3" />
+                                                                            Eliminar Paso
+                                                                        </Button>
+                                                                    )}
+                                                                </motion.div>
+                                                            )}
+                                                        </AnimatePresence>
+                                                    </Card>
+                                                </motion.div>
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                </form>
+                            </Form>
                             {/* Actions */}
                             <motion.div
                                 initial={{ opacity: 0, y: 10 }}
@@ -416,7 +429,7 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
                                 <Button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    onClick={handleSubmit(handleFormSubmit)}
+                                    onClick={form.handleSubmit(handleFormSubmit)}
                                     className="flex-1"
                                 >
                                     {isSubmitting ? 'Creando...' : 'Crear Configuración'}
