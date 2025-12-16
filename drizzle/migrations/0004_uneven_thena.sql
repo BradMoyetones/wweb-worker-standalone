@@ -1,0 +1,1 @@
+ALTER TABLE `cron_configs` ADD `status` text DEFAULT 'idle' NOT NULL;

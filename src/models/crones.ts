@@ -45,7 +45,6 @@ async function createCron(input: CreateCronFormData): Promise<CronWithSteps> {
       headers: step.headers ?? null,
       body: step.body ?? null,
       responseFormat: step.responseFormat,
-      dataPath: step.dataPath ?? null,
     }));
 
     await db.insert(cronWorkflowSteps).values(stepsToInsert);
@@ -80,6 +79,11 @@ async function updateCron(id: string, input: UpdateCronFormData): Promise<CronWi
   await db
     .update(cronConfigs)
     .set({
+      startAt: input.startAt,
+      endAt: input.endAt,
+      lastRunAt: input.lastRunAt,
+      status: input.status,
+      nextRunAt: input.nextRunAt,
       groupName: input.groupName,
       name: input.name,
       description: input.description ?? null,
@@ -95,6 +99,7 @@ async function updateCron(id: string, input: UpdateCronFormData): Promise<CronWi
 
   if (input.steps?.length) {
     const stepsToInsert = input.steps.map((step) => ({
+      ...step,
       id: uuid(),
       cronConfigId: id,
       stepOrder: step.stepOrder,
@@ -104,7 +109,6 @@ async function updateCron(id: string, input: UpdateCronFormData): Promise<CronWi
       headers: step.headers ?? null,
       body: step.body ?? null,
       responseFormat: step.responseFormat,
-      dataPath: step.dataPath ?? null,
     }));
 
     await db.insert(cronWorkflowSteps).values(stepsToInsert);

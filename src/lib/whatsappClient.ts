@@ -2,6 +2,7 @@ import { Chat, Client, ClientInfo, Contact, LocalAuth } from 'whatsapp-web.js';
 import path from 'path';
 import fs from 'fs';
 import { app, WebContents } from 'electron'; // Importa 'app' para acceder a rutas del sistema
+import { initCrons } from './initCrons';
 
 let client: Client | null = null;
 let activeWebContents: WebContents | null = null;
@@ -124,6 +125,8 @@ export const initializeClient = (webContents: Electron.WebContents) => {
             sendToRenderer('whatsapp-contacts', contacts);
             sendToRenderer('whatsapp-status', lastStatus);
 
+            // Si inicializan los crons de db al estar el cliente de WhatsApp totalmente cargado
+            await initCrons()
             resolve(client);
         });
 
@@ -192,3 +195,17 @@ export const initializeClient = (webContents: Electron.WebContents) => {
         });
     });
 };
+
+// --- Utilidad: buscar ID de grupo por nombre ---
+export async function getGroupIdByName(name: string) {
+    const chats = await client?.getChats();
+    const group = chats?.find(c => c.isGroup && c.name === name);
+    if (!group) throw new Error(`No encontré el grupo con nombre: ${name}`);
+    return group.id._serialized; // p.ej. "123456789@g.us"
+}
+
+// --- Utilidad: enviar mensaje a grupo por nombre ---
+export async function sendToGroupByName(groupName: string, message: string) {
+    const chatId = await getGroupIdByName(groupName);
+    return client?.sendMessage(chatId, message);
+}

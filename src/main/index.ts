@@ -6,6 +6,9 @@ import { installLatestVersionApp, verifyVersionApp } from '@app/config/updater'
 import { initializeClient } from '@app/lib/whatsappClient'
 import { Client } from 'whatsapp-web.js'
 import { createCron, deleteCron, findCronById, getAllCrones, updateCron } from '@app/models/crones'
+import { runWorkflow } from '@app/lib/workflows'
+import { scheduleCron, unscheduleCron } from '@app/lib/cronScheduler'
+import { setMainWindow } from '@app/lib/sendToRenderer'
 
 function createWindow(): void {
   // Create the browser window.
@@ -25,6 +28,8 @@ function createWindow(): void {
       devTools: is.dev,
     }
   })
+
+  setMainWindow(mainWindow);
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
@@ -216,22 +221,45 @@ ipcMain.handle("whatsapp-send-message", async (event, chatId: string, content: s
 });
 
 // DATABASE
-ipcMain.handle('getAllCrones', (_event) => {
-  return getAllCrones();
+ipcMain.handle('getAllCrones', async(_event) => {
+  const crones = await getAllCrones();
+
+  // Prueba de arranque de workflows
+  // crones.map(async(cron, i) => {
+  //   const runned = await runWorkflow(cron.steps)
+  //   console.log(`Cron ${i} Runned: `, runned);
+    
+  // })
+  
+  return crones
 });
 
-ipcMain.handle('createCron', (_event, input) => {
-  return createCron(input);
+ipcMain.handle('createCron', async(_event, input) => {
+  return await createCron(input);
 });
 
-ipcMain.handle('findCronById', (_event, id) => {
-  return findCronById(id);
+ipcMain.handle('findCronById', async(_event, id) => {
+  return await findCronById(id);
 });
 
-ipcMain.handle('updateCron', (_event, id, input) => {
-  return updateCron(id, input);
+ipcMain.handle('updateCron', async (_event, id, input) => {
+  const updated = await updateCron(id, input);
+
+  if (!updated) return null;
+
+  if (updated.isActive) {
+    scheduleCron(updated);
+  } else {
+    unscheduleCron(updated.id);
+  }
+
+  return updated;
 });
 
-ipcMain.handle('deleteCron', (_event, id) => {
-  return deleteCron(id);
+
+ipcMain.handle('deleteCron', async(_event, cron) => {
+  if (!cron) return null;
+  unscheduleCron(cron.id);
+  const deleted = await deleteCron(cron.id)
+  return deleted;
 });

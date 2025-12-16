@@ -11,6 +11,7 @@ import Advanced from "./components/settings/Advanced";
 import Theming from "./components/settings/Theming";
 import Me from "./components/settings/Me";
 import Versions from "@/components/Versions";
+import Footer from "@/components/footer";
 
 export default function RootLayout() {
     const [isOpen, setIsOpen] = useState(false)
@@ -36,6 +37,7 @@ export default function RootLayout() {
                     </Suspense>
                 </SectionContent>
             </Section>
+            <Footer />
 
             <SidebarContent className="max-w-screen overflow-y-auto gap-0">
                 <div className="flex justify-between items-center sticky -top-6 bg-background/10 backdrop-blur-xl border-b -mx-6 -mt-6 px-6 py-4">

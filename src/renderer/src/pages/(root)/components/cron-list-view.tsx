@@ -2,18 +2,19 @@
 
 import type React from 'react';
 
-import { mockCronWorkflowSteps } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { motion, Variants } from 'motion/react';
 import { Plus, Play, Pause, Trash2, ChevronRight, GitBranch } from 'lucide-react';
-import { CronWithSteps } from '@app/types/crone.types';
+import { CronWithSteps, UpdateCronFormData } from '@app/types/crone.types';
 import { useData } from '@/contexts';
 import { toast } from 'sonner';
+import { useState } from 'react';
+import { mapCronToForm } from '@app/utils/helpers';
 
 interface CronListViewProps {
     onSelectCron: (id: string) => void;
-    onCreateCron: () => void
+    onCreateCron: () => void;
 }
 
 const itemVariants: Variants = {
@@ -26,14 +27,10 @@ const itemVariants: Variants = {
 };
 
 export function CronListView({ onSelectCron, onCreateCron }: CronListViewProps) {
-    const {data: crons} = useData()
+    const { data: crons } = useData();
 
     const activeCount = crons.filter((c) => c.isActive).length;
     const totalCount = crons.length;
-
-    const getStepCount = (cronId: string) => {
-        return mockCronWorkflowSteps.filter((s) => s.cronConfigId === cronId).length
-    }
 
     return (
         <div className="min-h-screen bg-linear-to-b from-primary/15 via-transparent to-transparent p-4 md:p-8 rounded-xl">
@@ -82,22 +79,22 @@ export function CronListView({ onSelectCron, onCreateCron }: CronListViewProps) 
 
                 {/* Cron List */}
                 <div className="grid gap-4">
-                    {crons.length > 0 ? crons.map((cron) => (
-                        <motion.div 
-                            layout
-                            key={cron.id+"-list-item"} 
-                            variants={itemVariants}
-                            initial="hidden"
-                            animate="visible"
-                            exit={{ opacity: 0, y: -20 }}
-                        >
-                            <CronCard cron={cron} onSelect={onSelectCron} stepsCount={getStepCount(cron.id!)} />
-                        </motion.div>
-                    )): (
-                        <Card className='p-4'>
-                            <p className='text-center'>
-                                No hay Crons aún.
-                            </p>
+                    {crons.length > 0 ? (
+                        crons.map((cron) => (
+                            <motion.div
+                                layout
+                                key={cron.id + '-list-item'}
+                                variants={itemVariants}
+                                initial="hidden"
+                                animate="visible"
+                                exit={{ opacity: 0, y: -20 }}
+                            >
+                                <CronCard cron={cron} onSelect={onSelectCron} stepsCount={cron.steps.length} />
+                            </motion.div>
+                        ))
+                    ) : (
+                        <Card className="p-4">
+                            <p className="text-center">No hay Crons aún.</p>
                         </Card>
                     )}
                 </div>
@@ -106,26 +103,75 @@ export function CronListView({ onSelectCron, onCreateCron }: CronListViewProps) 
     );
 }
 
-function CronCard({ cron, onSelect, stepsCount }: { cron: CronWithSteps; onSelect: (id: string) => void; stepsCount: number }) {
-    const {setData} = useData()
+function CronCard({
+    cron,
+    onSelect,
+    stepsCount,
+}: {
+    cron: CronWithSteps;
+    onSelect: (id: string) => void;
+    stepsCount: number;
+}) {
+    const { setData } = useData();
+    const [isSaving, setIsSaving] = useState(false);
+
     const handleToggle = (e: React.MouseEvent) => {
         e.stopPropagation();
+        const wantToggle = confirm(`¿Estas seguro de ${cron.isActive ? 'Detener' : 'Activar'} este Cron?`)
+
+        if(!wantToggle) {
+            toast.info('Operación cancelada')
+            return
+        }
+
+        setIsSaving(true);
+        // await new Promise((resolve) => setTimeout(resolve, 800));
+        let parsedToForm = mapCronToForm(cron);
+        if (!parsedToForm) {
+            toast.error('Error al actualizar cron')
+            return
+        }
+
+        parsedToForm = {
+            ...parsedToForm,
+            isActive: !cron.isActive,
+        };
+
+        toast.promise(window.api.updateCron(cron?.id ?? '', parsedToForm), {
+            loading: `${cron.isActive ? 'Pausando' : 'Activando'} Cron...`,
+            success: (data) => {
+                if (!data) return 'Error: respuesta vacía';
+
+                setData((prev) => prev.map((item) => (item.id === data.id ? data : item)));
+
+                return `Cron ${cron.isActive ? 'Pausado' : 'Activado'} con éxito.`;
+            },
+            error: 'Error.',
+        });
+        console.log('Guardando configuración:', parsedToForm);
+        setIsSaving(false);
     };
 
-    const handleDelete = async (e: React.MouseEvent, id: string) => {
+    const handleDelete = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        try{
-            const deleted = await window.api.deleteCron(id)
-    
-            if(deleted.success){
-                setData((data) => data.filter((cron) => cron.id !== id))
-                toast.success("Cron eliminado éxitosamente")
-            }else {
-                toast.error("Error eliminado Cron")
-            }
+        const wantDelete = confirm("¿Estas seguro de eliminar este Cron?")
 
-        }catch{
-            toast.error("Error eliminado Cron")
+        if(!wantDelete) {
+            toast.info('Operación cancelada')
+            return
+        }
+
+        try {
+            const deleted = await window.api.deleteCron(cron);
+
+            if (deleted.success) {
+                setData((data) => data.filter((c) => c.id !== cron.id));
+                toast.success('Cron eliminado éxitosamente');
+            } else {
+                toast.error('Error eliminado Cron');
+            }
+        } catch {
+            toast.error('Error eliminado Cron');
         }
     };
 
@@ -134,8 +180,8 @@ function CronCard({ cron, onSelect, stepsCount }: { cron: CronWithSteps; onSelec
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
             transition={{
-                ease: "linear",
-                duration: 0.1
+                ease: 'linear',
+                duration: 0.1,
             }}
             onClick={() => onSelect(cron.id!)}
             className="cursor-pointer"
@@ -164,20 +210,27 @@ function CronCard({ cron, onSelect, stepsCount }: { cron: CronWithSteps; onSelec
                             <span>Grupo: {cron.groupName}</span>
                             <span className="flex items-center gap-1">
                                 <GitBranch className="w-3 h-3" />
-                                {stepsCount} paso{stepsCount !== 1 ? "s" : ""}
+                                {stepsCount} paso{stepsCount !== 1 ? 's' : ''}
                             </span>
                         </div>
                         {cron.description && <p className="text-xs text-muted-foreground mt-1">{cron.description}</p>}
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" onClick={handleToggle} className="hover:bg-muted/50">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleToggle}
+                            className="hover:bg-muted/50 cursor-pointer"
+                            disabled={isSaving}
+                        >
                             {cron.isActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                         </Button>
                         <Button
                             variant="ghost"
                             size="icon"
-                            onClick={(e) => handleDelete(e, cron.id ?? "")}
-                            className="hover:bg-red-500/10 hover:text-red-500"
+                            onClick={(e) => handleDelete(e)}
+                            className="hover:bg-red-500/10 hover:text-red-500 cursor-pointer"
+                            disabled={isSaving}
                         >
                             <Trash2 className="w-4 h-4" />
                         </Button>

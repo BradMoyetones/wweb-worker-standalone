@@ -23,7 +23,12 @@ const api = {
   createCron: (input: CreateCronFormData): Promise<CronWithSteps> => ipcRenderer.invoke('createCron', input),
   findCronById: (id: string): Promise<CronWithSteps | null> => ipcRenderer.invoke('findCronById', id),
   updateCron: (id: string, input: UpdateCronFormData): Promise<CronWithSteps | null> => ipcRenderer.invoke('updateCron', id, input),
-  deleteCron: (id: string): Promise<{ success: boolean }> => ipcRenderer.invoke('deleteCron', id)
+  deleteCron: (cron: CronWithSteps): Promise<{ success: boolean }> => ipcRenderer.invoke('deleteCron', cron),
+
+  // Eventos
+  onCronUpdated: (callback: (cron: CronWithSteps) => void) => {
+    ipcRenderer.on('cron-updated', (_e, cron) => callback(cron));
+  },
 }
 
 const whatsappApi = {

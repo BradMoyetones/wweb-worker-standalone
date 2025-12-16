@@ -18,8 +18,17 @@ export const cronConfigs = sqliteTable('cron_configs', {
     cronExpression: text('cron_expression').notNull(),
     timezone: text('timezone').default('America/New_York'),
 
+    // WINDOW
+    startAt: integer('start_at'), // null = inmediato
+    endAt: integer('end_at'),     // null = infinito
+
     // ESTADO
     isActive: integer('is_active').notNull().default(0),
+    status: text('status').notNull().default('idle'),
+
+    // METADATA
+    lastRunAt: integer('last_run_at'),
+    nextRunAt: integer('next_run_at'),
 
     // AUDITORÍA
     createdAt: integer('created_at')
@@ -58,7 +67,6 @@ export const cronWorkflowSteps = sqliteTable('cron_workflow_steps', {
 
     // PROCESAMIENTO DE RESPUESTA
     responseFormat: text('response_format').default('text'), // json, text
-    dataPath: text('data_path'), // ej: "data.count" - qué extraer del response
 
     // ======================
     // EXTRACTION (CLAVE)

@@ -15,7 +15,14 @@ export const cronConfigSchema = z.object({
             "Expresión cron inválida (ej: '0 0 * * *')"
         ),
     timezone: z.string().min(1, 'Zona horaria requerida'),
+    startAt: z.number().optional(), // timestamp - null = inmediato
+    endAt: z.number().optional(), // timestamp - null = infinito
     isActive: z.boolean(),
+    status: z.string().optional(),
+
+    lastRunAt: z.number('last_run_at').optional(),
+    nextRunAt: z.number('next_run_at').optional(),
+
     createdAt: z.number().optional(),
     updatedAt: z.number().optional(),
 });
@@ -28,8 +35,10 @@ export const cronWorkflowStepSchema = z.object({
     method: z.enum(['GET', 'POST', 'PUT', 'DELETE']),
     url: z.string().url('URL inválida'),
     headers: z.string().optional(), // JSON.stringify
+    bodyType: z.enum(['json', 'urlencoded', 'form', 'none']),
     body: z.string().optional(), // JSON.stringify
+    requestOptions: z.string().optional(), // JSON: { "redirect": "manual" }
     responseFormat: z.enum(['json', 'text']),
-    dataPath: z.string().optional(),
+    extract: z.string().optional(), // JSON para extraer valores de response
     createdAt: z.number().optional(),
 });

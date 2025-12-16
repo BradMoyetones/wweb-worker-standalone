@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -9,36 +9,35 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowLeft, Save, AlertCircle, ChevronDown, GitBranch, Trash2, Eye, Edit, X } from 'lucide-react';
+import {
+    ArrowLeft,
+    Save,
+    AlertCircle,
+    ChevronDown,
+    GitBranch,
+    Trash2,
+    Eye,
+    Edit,
+    X,
+    Plus,
+    MessageCircle,
+    MessageCircleOff,
+} from 'lucide-react';
 import { TimezoneSelect } from './timezone-select';
-import { CronWithSteps, UpdateCronFormData, updateCronSchema } from '@app/types/crone.types';
-import { useData } from '@/contexts';
+import { UpdateCronFormData, updateCronSchema } from '@app/types/crone.types';
+import { useData, useWhatsApp } from '@/contexts';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { KeyValueEditor } from './key-value-editor';
+import { JsonEditor } from './json-editor';
+import { mapCronToForm } from '@app/utils/helpers';
+import { DateTimePicker } from './datetime-picker';
 
 interface CronDetailViewProps {
     cronId: string;
     onBack: () => void;
-}
-
-function mapCronToForm(cron?: CronWithSteps): UpdateCronFormData | undefined {
-    if (!cron) return undefined;
-
-    return {
-        id: cron.id,
-        groupName: cron.groupName ?? '',
-        name: cron.name ?? '',
-        description: cron.description ?? '',
-        cronExpression: cron.cronExpression ?? '',
-        timezone: cron.timezone ?? 'America/Bogota',
-        isActive: cron.isActive ? true : false,
-        steps: cron.steps as any,
-        createdAt: cron.createdAt ? Number(cron.createdAt) : undefined,
-        updatedAt: cron.updatedAt ? Number(cron.updatedAt) : undefined,
-    };
 }
 
 export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
@@ -48,6 +47,10 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [expandedSteps, setExpandedSteps] = useState<number[]>([]);
     const [expandedStep, setExpandedStep] = useState<number | null>(0);
+
+    const [isFocused, setIsFocused] = useState(false);
+    const searchBarRef = useRef<HTMLDivElement>(null); // Ref para el div que encierra el input de busqueda
+    const { chats } = useWhatsApp();
 
     const form = useForm<UpdateCronFormData>({
         resolver: zodResolver(updateCronSchema),
@@ -69,6 +72,32 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
         name: 'steps',
     });
 
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (searchBarRef.current && !searchBarRef.current.contains(event.target as Node)) {
+                setIsFocused(false);
+            }
+        };
+
+        // Listener para cuando se cliquee fuera del Historial al estar desplegado
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    if (!cron) {
+        return (
+            <div className="min-h-screen bg-linear-to-b from-primary/15 via-transparent to-transparent flex items-center justify-center p-4 rounded-xl">
+                <Card className="bg-card border-border p-6">
+                    <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-4" />
+                    <p className="text-center">Configuración no encontrada</p>
+                    <Button onClick={onBack} className="mt-4 w-full">
+                        Volver
+                    </Button>
+                </Card>
+            </div>
+        );
+    }
+
     const onSubmit = async (data: UpdateCronFormData) => {
         setIsSaving(true);
         // await new Promise((resolve) => setTimeout(resolve, 800));
@@ -88,13 +117,13 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
         onBack();
     };
 
-    const handleDelete = async (e: React.MouseEvent, id: string) => {
+    const handleDelete = async (e: React.MouseEvent) => {
         e.stopPropagation();
         try {
-            const deleted = await window.api.deleteCron(id);
+            const deleted = await window.api.deleteCron(cron);
 
             if (deleted.success) {
-                setData((data) => data.filter((cron) => cron.id !== id));
+                setData((data) => data.filter((c) => c.id !== cron.id));
                 toast.success('Cron eliminado éxitosamente');
             } else {
                 toast.error('Error eliminado Cron');
@@ -105,20 +134,6 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
             onBack();
         }
     };
-
-    if (!cron) {
-        return (
-            <div className="min-h-screen bg-linear-to-b from-primary/15 via-transparent to-transparent flex items-center justify-center p-4 rounded-xl">
-                <Card className="bg-card border-border p-6">
-                    <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-4" />
-                    <p className="text-center">Configuración no encontrada</p>
-                    <Button onClick={onBack} className="mt-4 w-full">
-                        Volver
-                    </Button>
-                </Card>
-            </div>
-        );
-    }
 
     const toggleStep = (index: number) => {
         setExpandedSteps((prev) => (prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]));
@@ -143,7 +158,7 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
                         </Button>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="destructive" size={'icon'} onClick={(e) => handleDelete(e, cronId)}>
+                                <Button variant="destructive" size={'icon'} onClick={handleDelete}>
                                     <Trash2 className="w-4 h-4" />
                                 </Button>
                             </TooltipTrigger>
@@ -174,15 +189,60 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
                                     <FormField
                                         control={form.control}
                                         name="groupName"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Nombre del Grupo</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Ej: PJD SERVICIO Y EVENTOS" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
+                                        render={({ field }) => {
+                                            const filteredChats = chats.filter((chat) =>
+                                                chat.name.toLowerCase().includes((field.value ?? '').toLowerCase())
+                                            );
+
+                                            return (
+                                                <FormItem>
+                                                    <FormLabel>Nombre del Grupo</FormLabel>
+                                                    <FormControl>
+                                                        <div ref={searchBarRef} className="relative flex-1">
+                                                            <Input
+                                                                onFocus={() => setIsFocused(true)}
+                                                                placeholder="ej: PJD SERVICIO Y EVENTOS"
+                                                                {...field}
+                                                            />
+                                                            {isFocused && (
+                                                                <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-lg overflow-y-auto z-50 max-h-96">
+                                                                    <div className="py-2">
+                                                                        {filteredChats.length === 0 ? (
+                                                                            <p className="px-4 py-2 text-sm text-muted-foreground flex items-center gap-3">
+                                                                                <MessageCircleOff className="w-4 h-4 text-muted-foreground shrink-0" />
+                                                                                No se encontraron grupos
+                                                                            </p>
+                                                                        ) : (
+                                                                            filteredChats.map((chat) => (
+                                                                                <div
+                                                                                    key={chat.id._serialized}
+                                                                                    className="group relative hover:bg-accent hover:text-accent-foreground"
+                                                                                >
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => {
+                                                                                            field.onChange(chat.name);
+                                                                                            setIsFocused(false);
+                                                                                        }}
+                                                                                        className="w-full px-4 py-2 text-left text-sm text-foreground cursor-pointer flex items-center justify-between group transition-colors"
+                                                                                    >
+                                                                                        <span className="flex items-center gap-3 line-clamp-1 truncate">
+                                                                                            <MessageCircle className="w-4 h-4 text-muted-foreground shrink-0" />
+                                                                                            {chat.name}
+                                                                                        </span>
+                                                                                    </button>
+                                                                                </div>
+                                                                            ))
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            );
+                                        }}
                                     />
 
                                     <FormField
@@ -251,6 +311,44 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
                                             </FormItem>
                                         )}
                                     />
+
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="startAt"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <DateTimePicker
+                                                            label="Inicio (Opcional)"
+                                                            placeholder="Ejecutar desde..."
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="endAt"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <DateTimePicker
+                                                            label="Fin (Opcional)"
+                                                            placeholder="Ejecutar hasta..."
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Deja vacío para ejecución inmediata (inicio) o indefinida (fin)
+                                    </p>
                                 </div>
                             </Card>
 
@@ -266,10 +364,36 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
                                 </TabsList>
                                 <TabsContent value="view">
                                     <Card className="bg-card/30 backdrop-blur border-border/50 p-6">
-                                        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                                            <GitBranch className="w-4 h-4" />
-                                            Pasos del Workflow
-                                        </h2>
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="text-lg font-semibold flex items-center gap-2">
+                                                <GitBranch className="w-4 h-4" />
+                                                Pasos del Workflow
+                                            </h3>
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => {
+                                                    appendStep({
+                                                        stepOrder: stepFields.length + 1,
+                                                        name: '',
+                                                        method: 'POST',
+                                                        url: '',
+                                                        headers: '{}',
+                                                        bodyType: 'json',
+                                                        body: '{}',
+                                                        requestOptions: '',
+                                                        responseFormat: 'text',
+                                                        extract: '',
+                                                    });
+                                                    setExpandedStep(stepFields.length);
+                                                }}
+                                                className="gap-1"
+                                            >
+                                                <Plus className="w-3 h-3" />
+                                                Agregar Paso
+                                            </Button>
+                                        </div>
                                         <div className="space-y-2">
                                             {steps.map((step, index) => (
                                                 <motion.div
@@ -310,14 +434,6 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
                                                                             {step.responseFormat}
                                                                         </p>
                                                                     </div>
-                                                                    {step.dataPath && (
-                                                                        <div>
-                                                                            <p className="text-muted-foreground">
-                                                                                Data Path
-                                                                            </p>
-                                                                            <p className="font-mono">{step.dataPath}</p>
-                                                                        </div>
-                                                                    )}
                                                                 </div>
                                                                 {step.headers && step.headers !== '{}' && (
                                                                     <div>
@@ -343,6 +459,33 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
                                                                         </pre>
                                                                     </div>
                                                                 )}
+                                                                {step.requestOptions &&
+                                                                    step.requestOptions !== '{}' && (
+                                                                        <div>
+                                                                            <p className="text-muted-foreground">
+                                                                                Request Options
+                                                                            </p>
+                                                                            <pre className="bg-muted/50 p-2 rounded text-xs overflow-x-auto">
+                                                                                {JSON.stringify(
+                                                                                    JSON.parse(step.requestOptions),
+                                                                                    null,
+                                                                                    2
+                                                                                )}
+                                                                            </pre>
+                                                                        </div>
+                                                                    )}
+                                                                {step.extract && step.extract !== '{}' && (
+                                                                    <div>
+                                                                        <p className="text-muted-foreground">Extract</p>
+                                                                        <pre className="bg-muted/50 p-2 rounded text-xs overflow-x-auto">
+                                                                            {JSON.stringify(
+                                                                                JSON.parse(step.extract),
+                                                                                null,
+                                                                                2
+                                                                            )}
+                                                                        </pre>
+                                                                    </div>
+                                                                )}
                                                             </motion.div>
                                                         )}
                                                     </Card>
@@ -353,10 +496,36 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
                                 </TabsContent>
                                 <TabsContent value="edit">
                                     <Card className="bg-card/30 backdrop-blur border-border/50 p-6">
-                                        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                                            <GitBranch className="w-4 h-4" />
-                                            Pasos del Workflow
-                                        </h2>
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="text-lg font-semibold flex items-center gap-2">
+                                                <GitBranch className="w-4 h-4" />
+                                                Pasos del Workflow
+                                            </h3>
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => {
+                                                    appendStep({
+                                                        stepOrder: stepFields.length + 1,
+                                                        name: '',
+                                                        method: 'POST',
+                                                        url: '',
+                                                        headers: '{}',
+                                                        bodyType: 'json',
+                                                        body: '{}',
+                                                        requestOptions: '',
+                                                        responseFormat: 'text',
+                                                        extract: '',
+                                                    });
+                                                    setExpandedStep(stepFields.length);
+                                                }}
+                                                className="gap-1"
+                                            >
+                                                <Plus className="w-3 h-3" />
+                                                Agregar Paso
+                                            </Button>
+                                        </div>
                                         <div className="space-y-2">
                                             {stepFields.map((field, index) => (
                                                 <motion.div
@@ -458,20 +627,67 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
 
                                                                     <KeyValueEditor
                                                                         label="Headers"
-                                                                        value={form.watch(`steps.${index}.headers`)}
+                                                                        value={
+                                                                            form.watch(`steps.${index}.headers`) || '{}'
+                                                                        }
                                                                         onChange={(val) =>
                                                                             form.setValue(`steps.${index}.headers`, val)
                                                                         }
                                                                         placeholder="Agregar headers HTTP"
                                                                     />
 
-                                                                    <KeyValueEditor
-                                                                        label="Body (Key-Value)"
-                                                                        value={form.watch(`steps.${index}.body`)}
-                                                                        onChange={(val) =>
-                                                                            form.setValue(`steps.${index}.body`, val)
+                                                                    <div>
+                                                                        <Label className="text-xs font-medium">
+                                                                            Tipo de Body
+                                                                        </Label>
+                                                                        <select
+                                                                            {...form.register(
+                                                                                `steps.${index}.bodyType`
+                                                                            )}
+                                                                            className="w-full mt-2 h-8 rounded-md border border-border/50 bg-muted/50 text-sm px-2"
+                                                                        >
+                                                                            <option value="json">JSON</option>
+                                                                            <option value="urlencoded">
+                                                                                URL Encoded
+                                                                            </option>
+                                                                            <option value="form">Form Data</option>
+                                                                            <option value="none">Sin Body</option>
+                                                                        </select>
+                                                                    </div>
+
+                                                                    {form.watch(`steps.${index}.bodyType`) !==
+                                                                        'none' && (
+                                                                        <KeyValueEditor
+                                                                            label="Body (Key-Value)"
+                                                                            value={
+                                                                                form.watch(`steps.${index}.body`) ||
+                                                                                '{}'
+                                                                            }
+                                                                            onChange={(val) =>
+                                                                                form.setValue(
+                                                                                    `steps.${index}.body`,
+                                                                                    val
+                                                                                )
+                                                                            }
+                                                                            placeholder="Agregar parámetros del body"
+                                                                        />
+                                                                    )}
+
+                                                                    <JsonEditor
+                                                                        label="Request Options (Opcional)"
+                                                                        value={
+                                                                            form.watch(
+                                                                                `steps.${index}.requestOptions`
+                                                                            ) || ''
                                                                         }
-                                                                        placeholder="Agregar parámetros del body"
+                                                                        onChange={(val) =>
+                                                                            form.setValue(
+                                                                                `steps.${index}.requestOptions`,
+                                                                                val
+                                                                            )
+                                                                        }
+                                                                        placeholder='{ "redirect": "manual" }'
+                                                                        rows={3}
                                                                     />
 
                                                                     <div className="grid md:grid-cols-2 gap-4">
@@ -491,20 +707,19 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
                                                                                 </option>
                                                                             </select>
                                                                         </div>
-
-                                                                        <div>
-                                                                            <Label className="text-xs font-medium">
-                                                                                Data Path (Opcional)
-                                                                            </Label>
-                                                                            <Input
-                                                                                placeholder="ej: data.count"
-                                                                                {...form.register(
-                                                                                    `steps.${index}.dataPath`
-                                                                                )}
-                                                                                className="mt-2 h-8 text-sm bg-muted/50"
-                                                                            />
-                                                                        </div>
                                                                     </div>
+
+                                                                    <JsonEditor
+                                                                        label="Extract (Opcional)"
+                                                                        value={
+                                                                            form.watch(`steps.${index}.extract`) || ''
+                                                                        }
+                                                                        onChange={(val) =>
+                                                                            form.setValue(`steps.${index}.extract`, val)
+                                                                        }
+                                                                        placeholder='{ "cookies.session": { "from": "headers", "key": "set-cookie" } }'
+                                                                        rows={4}
+                                                                    />
 
                                                                     {stepFields.length > 1 && (
                                                                         <Button

@@ -10,12 +10,20 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
      const fetchData = async() => {
         const data = await window.api.getAllCrones()
+        console.log(data);
+        
         setData(data)
     }
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchData()
+
+        window.api.onCronUpdated((cron) => {
+            setData(prev =>
+                prev.map(c => (c.id === cron.id ? cron : c))
+            );
+        });
     }, [])
 
     return (

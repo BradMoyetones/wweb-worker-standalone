@@ -1,6 +1,7 @@
+/* eslint-disable react-hooks/incompatible-library */
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'motion/react';
@@ -8,13 +9,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { ChevronDown, Plus, X } from 'lucide-react';
+import { ChevronDown, MessageCircle, MessageCircleOff, Plus, X } from 'lucide-react';
 import { TimezoneSelect } from './timezone-select';
 import { KeyValueEditor } from './key-value-editor';
 import { CreateCronFormData, createCronSchema } from '@app/types/crone.types';
 import { toast } from 'sonner';
-import { useData } from '@/contexts';
+import { useData, useWhatsApp } from '@/contexts';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { JsonEditor } from './json-editor';
+import { DateTimePicker } from './datetime-picker';
 
 interface CreateCronModalProps {
     isOpen: boolean;
@@ -26,10 +29,16 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
     const [expandedStep, setExpandedStep] = useState<number | null>(0);
     const { setData } = useData();
 
+    const [isFocused, setIsFocused] = useState(false);
+    const searchBarRef = useRef<HTMLDivElement>(null); // Ref para el div que encierra el input de busqueda
+    const { chats } = useWhatsApp();
+
     const form = useForm<CreateCronFormData>({
         resolver: zodResolver(createCronSchema),
         defaultValues: {
             timezone: 'America/Bogota',
+            startAt: undefined,
+            endAt: undefined,
             isActive: false,
             steps: [
                 {
@@ -38,8 +47,11 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
                     method: 'POST',
                     url: '',
                     headers: '{}',
+                    bodyType: 'json',
                     body: '{}',
+                    requestOptions: '{}',
                     responseFormat: 'text',
+                    extract: '{}',
                 },
             ],
         },
@@ -59,8 +71,8 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
         toast.promise(window.api.createCron(data), {
             loading: 'Creando Cron...',
             success: (data) => {
-                console.log("DATA CREADA", data);
-                
+                console.log('DATA CREADA', data);
+
                 setData((prev) => [data, ...prev]);
 
                 return `Cron creado con éxito.`;
@@ -71,6 +83,18 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
         setIsSubmitting(false);
         onClose();
     };
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (searchBarRef.current && !searchBarRef.current.contains(event.target as Node)) {
+                setIsFocused(false);
+            }
+        };
+
+        // Listener para cuando se cliquee fuera del Historial al estar desplegado
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     return (
         <AnimatePresence>
@@ -127,18 +151,64 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
                                             <FormField
                                                 control={form.control}
                                                 name="groupName"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Nombre del Grupo</FormLabel>
-                                                        <FormControl>
-                                                            <Input
-                                                                placeholder="ej: PJD SERVICIO Y EVENTOS"
-                                                                {...field}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
+                                                render={({ field }) => {
+                                                    const filteredChats = chats.filter((chat) =>
+                                                        chat.name
+                                                            .toLowerCase()
+                                                            .includes((field.value ?? '').toLowerCase())
+                                                    );
+
+                                                    return (
+                                                        <FormItem>
+                                                            <FormLabel>Nombre del Grupo</FormLabel>
+                                                            <FormControl>
+                                                                <div ref={searchBarRef} className="relative flex-1">
+                                                                    <Input
+                                                                        onFocus={() => setIsFocused(true)}
+                                                                        placeholder="ej: PJD SERVICIO Y EVENTOS"
+                                                                        {...field}
+                                                                    />
+                                                                    {isFocused && (
+                                                                        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-lg overflow-y-auto z-50 max-h-96">
+                                                                            <div className="py-2">
+                                                                                {filteredChats.length === 0 ? (
+                                                                                    <p className="px-4 py-2 text-sm text-muted-foreground flex items-center gap-3">
+                                                                                        <MessageCircleOff className="w-4 h-4 text-muted-foreground shrink-0" />
+                                                                                        No se encontraron grupos
+                                                                                    </p>
+                                                                                ) : (
+                                                                                    filteredChats.map((chat) => (
+                                                                                        <div
+                                                                                            key={chat.id._serialized}
+                                                                                            className="group relative hover:bg-accent hover:text-accent-foreground"
+                                                                                        >
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                onClick={() => {
+                                                                                                    field.onChange(
+                                                                                                        chat.name
+                                                                                                    );
+                                                                                                    setIsFocused(false);
+                                                                                                }}
+                                                                                                className="w-full px-4 py-2 text-left text-sm text-foreground cursor-pointer flex items-center justify-between group transition-colors"
+                                                                                            >
+                                                                                                <span className="flex items-center gap-3 line-clamp-1 truncate">
+                                                                                                    <MessageCircle className="w-4 h-4 text-muted-foreground shrink-0" />
+                                                                                                    {chat.name}
+                                                                                                </span>
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    ))
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    );
+                                                }}
                                             />
 
                                             <FormField
@@ -165,10 +235,7 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
                                                     <FormItem>
                                                         <FormLabel>Descripción (Opcional)</FormLabel>
                                                         <FormControl>
-                                                            <Input
-                                                                placeholder="¿Qué hace este workflow?"
-                                                                {...field}
-                                                            />
+                                                            <Input placeholder="¿Qué hace este workflow?" {...field} />
                                                         </FormControl>
                                                         <FormMessage />
                                                     </FormItem>
@@ -212,14 +279,50 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
                                                     <FormItem>
                                                         <FormLabel>Zona Horaria</FormLabel>
                                                         <FormControl>
-                                                            <TimezoneSelect
-                                                                {...field}
-                                                            />
+                                                            <TimezoneSelect {...field} />
                                                         </FormControl>
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
                                             />
+
+                                            <div className="grid md:grid-cols-2 gap-4">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="startAt"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormControl>
+                                                                <DateTimePicker
+                                                                    label="Inicio (Opcional)"
+                                                                    placeholder="Ejecutar desde..."
+                                                                    {...field}
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="endAt"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormControl>
+                                                                <DateTimePicker
+                                                                    label="Fin (Opcional)"
+                                                                    placeholder="Ejecutar hasta..."
+                                                                    {...field}
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">
+                                                Deja vacío para ejecución inmediata (inicio) o indefinida (fin)
+                                            </p>
                                         </div>
                                     </motion.div>
 
@@ -242,9 +345,13 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
                                                         method: 'POST',
                                                         url: '',
                                                         headers: '{}',
+                                                        bodyType: 'json',
                                                         body: '{}',
+                                                        requestOptions: '',
                                                         responseFormat: 'text',
+                                                        extract: '',
                                                     });
+                                                    setExpandedStep(stepFields.length);
                                                 }}
                                                 className="gap-1"
                                             >
@@ -275,7 +382,8 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
                                                                 </p>
                                                                 <p className="text-xs text-muted-foreground">
                                                                     {form.watch(`steps.${index}.method`)} •{' '}
-                                                                    {form.watch(`steps.${index}.url`)}
+                                                                    {form.watch(`steps.${index}.bodyType`)} •{' '}
+                                                                    {form.watch(`steps.${index}.url`) || 'No URL'}
                                                                 </p>
                                                             </div>
                                                             <ChevronDown
@@ -298,12 +406,19 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
                                                                             </Label>
                                                                             <Input
                                                                                 placeholder="ej: Login"
-                                                                                {...form.register(`steps.${index}.name`)}
+                                                                                {...form.register(
+                                                                                    `steps.${index}.name`
+                                                                                )}
                                                                                 className="mt-2 h-8 text-sm bg-muted/50"
                                                                             />
-                                                                            {form.formState.errors.steps?.[index]?.name && (
+                                                                            {form.formState.errors.steps?.[index]
+                                                                                ?.name && (
                                                                                 <p className="text-xs text-red-500 mt-1">
-                                                                                    {form.formState.errors.steps[index]?.name?.message}
+                                                                                    {
+                                                                                        form.formState.errors.steps[
+                                                                                            index
+                                                                                        ]?.name?.message
+                                                                                    }
                                                                                 </p>
                                                                             )}
                                                                         </div>
@@ -313,7 +428,9 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
                                                                                 Método HTTP
                                                                             </Label>
                                                                             <select
-                                                                                {...form.register(`steps.${index}.method`)}
+                                                                                {...form.register(
+                                                                                    `steps.${index}.method`
+                                                                                )}
                                                                                 className="w-full mt-2 h-8 rounded-md border border-border/50 bg-muted/50 text-sm px-2"
                                                                             >
                                                                                 <option value="GET">GET</option>
@@ -335,27 +452,77 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
                                                                         />
                                                                         {form.formState.errors.steps?.[index]?.url && (
                                                                             <p className="text-xs text-red-500 mt-1">
-                                                                                {form.formState.errors.steps[index]?.url?.message}
+                                                                                {
+                                                                                    form.formState.errors.steps[index]
+                                                                                        ?.url?.message
+                                                                                }
                                                                             </p>
                                                                         )}
                                                                     </div>
 
                                                                     <KeyValueEditor
                                                                         label="Headers"
-                                                                        value={form.watch(`steps.${index}.headers`)}
+                                                                        value={
+                                                                            form.watch(`steps.${index}.headers`) || '{}'
+                                                                        }
                                                                         onChange={(val) =>
                                                                             form.setValue(`steps.${index}.headers`, val)
                                                                         }
                                                                         placeholder="Agregar headers HTTP"
                                                                     />
 
-                                                                    <KeyValueEditor
-                                                                        label="Body (Key-Value)"
-                                                                        value={form.watch(`steps.${index}.body`)}
-                                                                        onChange={(val) =>
-                                                                            form.setValue(`steps.${index}.body`, val)
+                                                                    <div>
+                                                                        <Label className="text-xs font-medium">
+                                                                            Tipo de Body
+                                                                        </Label>
+                                                                        <select
+                                                                            {...form.register(
+                                                                                `steps.${index}.bodyType`
+                                                                            )}
+                                                                            className="w-full mt-2 h-8 rounded-md border border-border/50 bg-muted/50 text-sm px-2"
+                                                                        >
+                                                                            <option value="json">JSON</option>
+                                                                            <option value="urlencoded">
+                                                                                URL Encoded
+                                                                            </option>
+                                                                            <option value="form">Form Data</option>
+                                                                            <option value="none">Sin Body</option>
+                                                                        </select>
+                                                                    </div>
+
+                                                                    {form.watch(`steps.${index}.bodyType`) !==
+                                                                        'none' && (
+                                                                        <KeyValueEditor
+                                                                            label="Body (Key-Value)"
+                                                                            value={
+                                                                                form.watch(`steps.${index}.body`) ||
+                                                                                '{}'
+                                                                            }
+                                                                            onChange={(val) =>
+                                                                                form.setValue(
+                                                                                    `steps.${index}.body`,
+                                                                                    val
+                                                                                )
+                                                                            }
+                                                                            placeholder="Agregar parámetros del body"
+                                                                        />
+                                                                    )}
+
+                                                                    <JsonEditor
+                                                                        label="Request Options (Opcional)"
+                                                                        value={
+                                                                            form.watch(
+                                                                                `steps.${index}.requestOptions`
+                                                                            ) || ''
                                                                         }
-                                                                        placeholder="Agregar parámetros del body"
+                                                                        onChange={(val) =>
+                                                                            form.setValue(
+                                                                                `steps.${index}.requestOptions`,
+                                                                                val
+                                                                            )
+                                                                        }
+                                                                        placeholder='{ "redirect": "manual" }'
+                                                                        rows={3}
                                                                     />
 
                                                                     <div className="grid md:grid-cols-2 gap-4">
@@ -375,18 +542,19 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
                                                                                 </option>
                                                                             </select>
                                                                         </div>
-
-                                                                        <div>
-                                                                            <Label className="text-xs font-medium">
-                                                                                Data Path (Opcional)
-                                                                            </Label>
-                                                                            <Input
-                                                                                placeholder="ej: data.count"
-                                                                                {...form.register(`steps.${index}.dataPath`)}
-                                                                                className="mt-2 h-8 text-sm bg-muted/50"
-                                                                            />
-                                                                        </div>
                                                                     </div>
+
+                                                                    <JsonEditor
+                                                                        label="Extract (Opcional)"
+                                                                        value={
+                                                                            form.watch(`steps.${index}.extract`) || ''
+                                                                        }
+                                                                        onChange={(val) =>
+                                                                            form.setValue(`steps.${index}.extract`, val)
+                                                                        }
+                                                                        placeholder='{ "cookies.session": { "from": "headers", "key": "set-cookie" } }'
+                                                                        rows={4}
+                                                                    />
 
                                                                     {stepFields.length > 1 && (
                                                                         <Button
