@@ -1,6 +1,6 @@
 import { Chat, ClientInfo, Contact } from "whatsapp-web.js";
 
-export type WhatsAppStatus = 'init' | 'loading' | 'qr' | 'ready' | 'auth_failure' | 'disconnected' | 'authenticated';
+export type WhatsAppStatus = 'init' | 'loading' | 'qr' | 'ready' | 'auth_failure' | 'disconnected' | 'authenticated' | 'downloading-browser';
 export interface WhatsAppContextType {
     status: WhatsAppStatus;
     imgQr: string;

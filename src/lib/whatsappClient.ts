@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { app, WebContents } from 'electron'; // Importa 'app' para acceder a rutas del sistema
 import { initCrons } from './initCrons';
+import { getChromiumPath } from './browserDownloader';
 
 let client: Client | null = null;
 let activeWebContents: WebContents | null = null;
@@ -23,8 +24,16 @@ console.log(userDataPath);
 const BOOT_TIMEOUT = 25000; // 25 segundos
 
 let booted = false; // se pone en true cuando cualquier evento real ocurre
+let isDownloading = false; // Nueva bandera
+let isInitializing = false; // Nueva variable de control global
 
-const bootTimeout = setTimeout(() => {
+const checkBootStatus = () => {
+    // Si todavía estamos descargando, reprogramamos el chequeo
+    if (isDownloading) {
+        setTimeout(checkBootStatus, 5000); 
+        return;
+    }
+
     if (!booted) {
         console.log("[WATCHDOG] WhatsApp se quedó pegado. Reseteando sesión...");
 
@@ -38,7 +47,9 @@ const bootTimeout = setTimeout(() => {
         app.relaunch();
         app.exit(0);
     }
-}, BOOT_TIMEOUT);
+};
+
+const bootTimeout = setTimeout(checkBootStatus, BOOT_TIMEOUT);
 
 // Marcar cuando la app realmente avanza
 function markBooted() {
@@ -58,8 +69,8 @@ function sendToRenderer(channel: string, payload: any) {
 }
 
 export const initializeClient = (webContents: Electron.WebContents) => {
-    return new Promise((resolve, reject) => {
-        activeWebContents = webContents;
+    // eslint-disable-next-line no-async-promise-executor
+    return new Promise(async(resolve, reject) => {
 
         if (client) {
             console.log('Client already initialized.');
@@ -74,125 +85,155 @@ export const initializeClient = (webContents: Electron.WebContents) => {
             return;
         }
 
-        console.log('Initializing WhatsApp client...');
-        client = new Client({
-            authStrategy: new LocalAuth({
-                clientId: 'wweb-worker',
-                dataPath: sessionPath, // Ruta donde se guardarán los datos de la sesión
-            }),
-            puppeteer: {
-                headless: true, // `true` para no mostrar el navegador, `false` para depurar
-                args: [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                ],
-            }
-        });
+        // Si ya se está intentando inicializar, no permitimos otra entrada
+        if (isInitializing) {
+            console.log('[WARN] Ya hay una inicialización en curso. Ignorando esta llamada.');
+            return; 
+        }
 
-        // Escuchadores de eventos
-        client.on('qr', (qr) => {
-            markBooted()
-            console.log('QR RECEIVED', qr);
-            lastStatus = { status: 'qr', qr };
-            sendToRenderer('whatsapp-status', lastStatus);
-        });
+        isInitializing = true;
+        activeWebContents = webContents;
 
-        client.on('ready', async() => {
-            markBooted()
-            if(!client) return
-            console.log('Client is ready!');
+        try {
+            isDownloading = true; // Pausamos conceptualmente el watchdog
+            sendToRenderer('whatsapp-status', { status: 'downloading-browser', progress: 0 });
 
-            userInfo = client.info;
-
-            let profilePic: string | null = null;
-            try {
-                profilePic = await client.getProfilePicUrl(userInfo.wid._serialized);
-            } catch (err) {
-                console.log("No se pudo obtener tu foto de perfil", err);
-            }
-
-            const enrichedUser = {
-                ...userInfo,
-                profilePic,
-            };
-
-            userInfo = enrichedUser
-            chats = await client.getChats();
-            lastStatus = { status: 'ready' };
-            
-            sendToRenderer('whatsapp-user', enrichedUser);
-            sendToRenderer('whatsapp-chats', chats);
-            sendToRenderer('whatsapp-contacts', contacts);
-            sendToRenderer('whatsapp-status', lastStatus);
-
-            // Si inicializan los crons de db al estar el cliente de WhatsApp totalmente cargado
-            await initCrons()
-            resolve(client);
-        });
-
-        // Nuevo mensaje
-        client.on('message_create', (msg) => {
-
-            chats = chats.map((chat) => {
-                if (chat.isGroup && chat.id._serialized === msg.to) {
-                    return { ...chat, lastMessage: msg };
-                }
-                if (msg.fromMe && chat.id._serialized === msg.to) {
-                    return { ...chat, lastMessage: msg };
-                }
-                if (!msg.fromMe && chat.id._serialized === msg.from) {
-                    return { ...chat, lastMessage: msg };
-                }
-                return chat;
+            const execPath = await getChromiumPath((progress) => {
+                sendToRenderer('whatsapp-status', { status: 'downloading-browser', progress });
             });
-            
-            sendToRenderer('whatsapp-message', msg);
-        });
 
-        client.on('chat_removed', (chat) => {
-            console.log('Chat eliminado:', chat.id._serialized);
+            isDownloading = false; // Descarga terminada, el watchdog ahora sí cuenta
+            console.log('Browser listo en:', execPath);
 
-            // actualizas tu snapshot global
-            chats = chats.filter(c => c.id._serialized !== chat.id._serialized);
+            console.log('Initializing WhatsApp client...');
+            client = new Client({
+                authStrategy: new LocalAuth({
+                    clientId: 'wweb-worker',
+                    dataPath: sessionPath, // Ruta donde se guardarán los datos de la sesión
+                }),
+                puppeteer: {
+                    executablePath: execPath,
+                    headless: true, // `true` para no mostrar el navegador, `false` para depurar
+                    args: [
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                    ],
+                }
+            });
 
-            // reenvías la data al renderer
-            sendToRenderer('whatsapp-chats', chats);
-        });
+            // Escuchadores de eventos
+            client.on('qr', (qr) => {
+                markBooted()
+                console.log('QR RECEIVED', qr);
+                lastStatus = { status: 'qr', qr };
+                sendToRenderer('whatsapp-status', lastStatus);
+            });
 
-        client.on('chat_archived', async(chat) => {
-            if(!client) return
-            console.log('Chat archivado:', chat.id._serialized);
-            chats = await client.getChats();
-            // reenvías la data al renderer
-            sendToRenderer('whatsapp-chats', chats);
-        });
+            client.on('ready', async() => {
+                isInitializing = false;
+                markBooted()
+                if(!client) return
+                console.log('Client is ready!');
 
-        client.on('authenticated', (session) => {
-            markBooted()
-            console.log('AUTHENTICATED', session);
-            lastStatus = { status: 'authenticated' };
-            sendToRenderer('whatsapp-status', lastStatus);
-        });
+                userInfo = client.info;
 
-        client.on('auth_failure', msg => {
-            markBooted()
-            console.error('AUTHENTICATION FAILURE', msg);
-            lastStatus = { status: 'auth_failure', error: msg };
-            sendToRenderer('whatsapp-status', lastStatus);
-            reject(new Error(msg));
-        });
+                let profilePic: string | null = null;
+                try {
+                    profilePic = await client.getProfilePicUrl(userInfo.wid._serialized);
+                } catch (err) {
+                    console.log("No se pudo obtener tu foto de perfil", err);
+                }
 
-        client.on('disconnected', (reason) => {
-            console.log('Client disconnected', reason);
-            lastStatus = { status: 'disconnected', error: reason };
-            sendToRenderer('whatsapp-status', lastStatus);
-        });
-        // ------
+                const enrichedUser = {
+                    ...userInfo,
+                    profilePic,
+                };
 
-        client.initialize().catch(err => {
-            console.error('Initialization failed:', err);
-            reject(err);
-        });
+                userInfo = enrichedUser
+                chats = await client.getChats();
+                lastStatus = { status: 'ready' };
+                
+                sendToRenderer('whatsapp-user', enrichedUser);
+                sendToRenderer('whatsapp-chats', chats);
+                sendToRenderer('whatsapp-contacts', contacts);
+                sendToRenderer('whatsapp-status', lastStatus);
+
+                // Si inicializan los crons de db al estar el cliente de WhatsApp totalmente cargado
+                await initCrons()
+                resolve(client);
+            });
+
+            // Nuevo mensaje
+            client.on('message_create', (msg) => {
+
+                chats = chats.map((chat) => {
+                    if (chat.isGroup && chat.id._serialized === msg.to) {
+                        return { ...chat, lastMessage: msg };
+                    }
+                    if (msg.fromMe && chat.id._serialized === msg.to) {
+                        return { ...chat, lastMessage: msg };
+                    }
+                    if (!msg.fromMe && chat.id._serialized === msg.from) {
+                        return { ...chat, lastMessage: msg };
+                    }
+                    return chat;
+                });
+                
+                sendToRenderer('whatsapp-message', msg);
+            });
+
+            client.on('chat_removed', (chat) => {
+                console.log('Chat eliminado:', chat.id._serialized);
+
+                // actualizas tu snapshot global
+                chats = chats.filter(c => c.id._serialized !== chat.id._serialized);
+
+                // reenvías la data al renderer
+                sendToRenderer('whatsapp-chats', chats);
+            });
+
+            client.on('chat_archived', async(chat) => {
+                if(!client) return
+                console.log('Chat archivado:', chat.id._serialized);
+                chats = await client.getChats();
+                // reenvías la data al renderer
+                sendToRenderer('whatsapp-chats', chats);
+            });
+
+            client.on('authenticated', (session) => {
+                markBooted()
+                console.log('AUTHENTICATED', session);
+                lastStatus = { status: 'authenticated' };
+                sendToRenderer('whatsapp-status', lastStatus);
+            });
+
+            client.on('auth_failure', msg => {
+                markBooted()
+                console.error('AUTHENTICATION FAILURE', msg);
+                lastStatus = { status: 'auth_failure', error: msg };
+                sendToRenderer('whatsapp-status', lastStatus);
+                reject(new Error(msg));
+            });
+
+            client.on('disconnected', (reason) => {
+                console.log('Client disconnected', reason);
+                lastStatus = { status: 'disconnected', error: reason };
+                sendToRenderer('whatsapp-status', lastStatus);
+            });
+            // ------
+
+            client.initialize().catch(err => {
+                isInitializing = false; // Liberamos el bloqueo si falla
+                isDownloading = false;
+                console.error('Initialization failed:', err);
+                reject(err);
+            });
+        } catch (error) {
+            isDownloading = false;
+            console.error('Fallo en descarga o inicio:', error);
+            sendToRenderer('whatsapp-status', { status: 'error', error: 'Fallo al descargar navegador' });
+            reject(error);
+        }
     });
 };
 

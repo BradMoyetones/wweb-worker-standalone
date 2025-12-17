@@ -19,6 +19,8 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [chatSelected, setChatSelected] = useState("")
 
+    const [downloadProgress, setDownloadProgress] = useState(0); // Browser
+
     const [showOverlay, setShowOverlay] = useState(true);
     const [fadeOut, setFadeOut] = useState(false);
 
@@ -46,7 +48,14 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
         window.whatsappApi.init();
 
         window.whatsappApi.onStatus((data) => {
+            // console.log("WWEB Status", data);
+            
             setStatus(data.status as WhatsAppStatus);
+
+            // Capturar el progreso de descarga
+            if (data.status === 'downloading-browser') {
+                setDownloadProgress(data.progress || 0);
+            }
 
             if (data.status === 'qr' && data.qr) {
                 QRCode.toDataURL(data.qr).then(url => setImgQr(url));
@@ -110,6 +119,32 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
                 setChatSelected
             }}
         >
+
+            {/* VISTA DE DESCARGA DE NAVEGADOR */}
+            {status === 'downloading-browser' && (
+                <div className="bg-background fixed inset-0 z-50 wavy-lines flex items-center justify-center">
+                    <Card className="max-w-md w-full mx-4">
+                        <CardContent className="pt-6">
+                            <div className="flex flex-col items-center gap-4 text-center">
+                                <div className="p-3 bg-primary/10 rounded-full">
+                                    <Loader className="animate-spin text-primary size-8" />
+                                </div>
+                                <div className="space-y-2 w-full">
+                                    <h1 className="text-2xl font-bold">Preparando entorno</h1>
+                                    <p className="text-muted-foreground">
+                                        Descargando componentes necesarios para WhatsApp ({downloadProgress}%)
+                                    </p>
+                                    <Progress value={downloadProgress} className="h-2 w-full" />
+                                    <p className="text-xs text-muted-foreground italic">
+                                        Esto solo ocurrirá la primera vez que inicies la app.
+                                    </p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+            
             {(status === 'loading' || status === 'qr') && (
                 <div className="bg-background fixed inset-0 z-50 wavy-lines">
                     <div className="flex items-center justify-center h-full">

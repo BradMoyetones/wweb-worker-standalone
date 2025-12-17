@@ -27,6 +27,11 @@ nsis:
   runAfterFinish: true
 mac:
   icon: resources/icon.png
+  target: # Arquitecturas Intel y M
+    - target: dmg
+      arch:
+        - x64
+        - arm64
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSSystemPolicyAllFiles: Application requires full system access.
@@ -42,9 +47,8 @@ dmg:
 linux:
   icon: resources/icon.png
   target:
-    - AppImage
-    - snap
-    - deb
+    - AppImage # El estándar para Linux (funciona en todo lado)
+    - deb # Para Ubuntu/Debian
   maintainer: electronjs.org
   category: Utility
 appImage:
