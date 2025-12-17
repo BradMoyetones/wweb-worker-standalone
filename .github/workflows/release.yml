@@ -7,7 +7,8 @@ on:
 
 jobs:
   release:
-    permissions: contents: write # IMPORTANTE: Permiso para editar la release
+    permissions: 
+      contents: write # IMPORTANTE: Permiso para editar la release
     runs-on: ${{ matrix.os }}
     
     strategy:
@@ -60,4 +61,5 @@ jobs:
           body_path: releases/notes/latest.md 
           # Asegura que no borre los archivos que subieron Windows y Mac
           append_body: false 
-          token: ${{ secrets.GH_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
