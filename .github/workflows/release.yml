@@ -21,7 +21,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       # Instalamos pnpm (opcional, si usas npm omite este paso y usa npm install)
       - name: Install dependencies
@@ -35,4 +35,4 @@ jobs:
           npm run build
           # Aquí llamamos al comando de electron-builder para publicar
           # El flag -p always fuerza la publicación a GitHub
-          npx electron-builder --config electron-builder.yml --publish always
+          npx electron-builder --config electron-builder.yml --publish always -wml
