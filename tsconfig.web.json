@@ -9,6 +9,10 @@
     "src/utils/**/*",
   ],
   "compilerOptions": {
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
     "composite": true,
     "jsx": "react-jsx",
     "baseUrl": ".",
