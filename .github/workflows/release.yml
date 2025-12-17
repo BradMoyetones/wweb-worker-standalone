@@ -21,7 +21,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 20
 
       # Instalamos pnpm (opcional, si usas npm omite este paso y usa npm install)
       - name: Install dependencies
@@ -33,6 +33,13 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }} # Toma el token que guardamos
         run: |
           npm run build
-          # Aquí llamamos al comando de electron-builder para publicar
-          # El flag -p always fuerza la publicación a GitHub
-          npx electron-builder --config electron-builder.yml --publish always -wml
+          
+          # LÓGICA POR SISTEMA:
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            npx electron-builder --win --publish always
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            npx electron-builder --mac --publish always
+          else
+            npx electron-builder --linux --publish always
+          fi
+        shell: bash # Forzamos bash en Windows para que el 'if' funcione
