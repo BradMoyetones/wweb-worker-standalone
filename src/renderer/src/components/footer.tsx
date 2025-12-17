@@ -11,7 +11,7 @@ export default function Footer() {
                 <h1 className="font-extrabold bg-linear-to-r from-primary to-foreground/50 text-transparent bg-clip-text drop-shadow-[0_0_2px_var(--primary)]">
                     WWEB Worker
                 </h1>
-                <p className="text-muted-foreground text-xs">Versión {appVersion?.currentVersion}</p>
+                <p className="text-muted-foreground text-xs">Versión {appVersion}</p>
 
                 <Link href="https://github.com/BradMoyetones">
                     <Github />

@@ -1,12 +1,7 @@
-export interface VersionInfo {
-    currentVersion: string;
-    newVersion: string | null;
-    message: string;
-}
+import { ProgressInfo, UpdateInfo } from "electron-updater";
 
-export interface YtDlpContextType {
-    appVersion: VersionInfo | null;
-    loading: boolean;
-    checkVersionApp: () => Promise<void>;
-    updateApp: () => Promise<void>;
+export interface VersionContextType {
+    appVersion: string;
+    updateAvailable?: UpdateInfo;
+    downloadProgress?: ProgressInfo;
 }

@@ -1,39 +1,54 @@
 import { createContext, useEffect, useState } from 'react';
-import { VersionInfo, YtDlpContextType } from './VersionContext.types';
+import { VersionContextType } from './VersionContext.types';
+import { ProgressInfo, UpdateInfo } from 'electron-updater';
+import { toast } from 'sonner';
 
-export const VersionContext = createContext<YtDlpContextType | undefined>(undefined);
+export const VersionContext = createContext<VersionContextType | undefined>(undefined);
 
 export function VersionProvider({ children }: { children: React.ReactNode }) {
-    const [appVersion, setAppVersion] = useState<VersionInfo | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [appVersion, setAppVersion] = useState<string>("");
 
-    const checkVersionApp = async () => {
-        setLoading(true);
-        const data = await window.api.verifyVersionApp();
-        setAppVersion(data);
-        setLoading(false);
-    };
+    const [updateAvailable, setUpdateAvailable] = useState<UpdateInfo>()
+    const [downloadProgress, setDownloadProgress] = useState<ProgressInfo>()
 
-    const updateApp = async () => {
-        setLoading(true);
-        const data = await window.api.installLatestVersionApp();
-        setAppVersion(data);
-        setLoading(false);
-    };
-
+    const getAppVersion = async() => {
+        setAppVersion(await window.api.getAppVersion())
+    }
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        checkVersionApp();
-        // Función para verificar la versión
-        const intervalId = setInterval(() => {
-            checkVersionApp();
-        }, 300000);
+        getAppVersion()
 
-        return () => clearInterval(intervalId);
+        // Escuchar si hay actualización
+        window.api.onUpdateAvailable((info) => {
+            setUpdateAvailable(info);
+            toast.info('Nueva versión disponible. Descargando...');
+        });
+
+        // Escuchar progreso
+        window.api.onDownloadProgress((progress) => {
+            setDownloadProgress(progress);
+            console.log(`Descargando: ${progress.percent}%`);
+        });
+
+        // Escuchar cuando termine
+        window.api.onUpdateDownloaded(() => {
+            toast.success('Actualización descargada', {
+                action: {
+                    label: 'Reiniciar',
+                    onClick: () => window.api.restartApp(),
+                },
+                duration: Infinity, // Que se quede hasta que el usuario decida
+            });
+        });
+
+        // Limpieza al desmontar
+        return () => {
+            window.api.removeAllUpdateListeners();
+        };
     }, []);
 
     return (
-        <VersionContext.Provider value={{ appVersion, loading, checkVersionApp, updateApp }}>
+        <VersionContext.Provider value={{ appVersion, updateAvailable, downloadProgress }}>
             {children}
         </VersionContext.Provider>
     );

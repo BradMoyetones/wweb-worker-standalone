@@ -2,13 +2,11 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import { Chat, ClientInfo, Contact, Message } from 'whatsapp-web.js';
 import { CreateCronFormData, CronWithSteps, UpdateCronFormData } from '@app/types/crone.types';
+import { ProgressInfo, UpdateDownloadedEvent, UpdateInfo } from 'electron-updater';
 
 // Custom APIs for renderer
 const api = {
-  verifyVersionApp: () => ipcRenderer.invoke('verifyVersionApp'),
-  installLatestVersionApp: () => ipcRenderer.invoke('installLatestVersionApp'),
-  getAppVersion: () => ipcRenderer.invoke("get-app-version"),
-  getPlatform: () => ipcRenderer.invoke("get-platform"),
+  
 
   minimize: () => ipcRenderer.send("minimize"),
   maximize: () => ipcRenderer.invoke("maximize"),
@@ -29,6 +27,39 @@ const api = {
   onCronUpdated: (callback: (cron: CronWithSteps) => void) => {
     ipcRenderer.on('cron-updated', (_e, cron) => callback(cron));
   },
+
+  // ---------------------------------------------------
+  // Updater
+  // ---------------------------------------------------
+
+  getAppVersion: () => ipcRenderer.invoke("get-app-version"),
+  getPlatform: () => ipcRenderer.invoke("get-platform"),
+
+  // Evento: Actualización disponible
+  onUpdateAvailable: (callback: (info: UpdateInfo) => void) => 
+    ipcRenderer.on('update-available', (_event, value) => callback(value)),
+
+  // Evento: Progreso de descarga
+  onDownloadProgress: (callback: (progress: ProgressInfo) => void) => 
+    ipcRenderer.on('download-progress', (_event, value) => callback(value)),
+
+  // Evento: Descarga lista
+  onUpdateDownloaded: (callback: (info: UpdateDownloadedEvent) => void) => 
+    ipcRenderer.on('update-downloaded', (_event, value) => callback(value)),
+
+  // Evento: Error
+  onUpdateError: (callback: (err: Error) => void) => 
+    ipcRenderer.on('update-error', (_event, value) => callback(value)),
+
+  // Acción: Reiniciar app
+  restartApp: () => ipcRenderer.invoke('restart-app'),
+  
+  // Limpiar listeners (importante en React useEffect)
+  removeAllUpdateListeners: () => {
+    ipcRenderer.removeAllListeners('update-available')
+    ipcRenderer.removeAllListeners('download-progress')
+    ipcRenderer.removeAllListeners('update-downloaded')
+  }
 }
 
 const whatsappApi = {
@@ -62,7 +93,7 @@ const whatsappApi = {
 
   getMessagesChat: (chatId: string) => ipcRenderer.invoke('whatsapp-get-messages', chatId),
   downloadMedia: (messageId: string, chatId: string) => ipcRenderer.invoke('whatsapp-download-media', messageId, chatId),
-  sendMessage: (chatId: string, content: string, replyToId?: string | null) => ipcRenderer.invoke('whatsapp-send-message', chatId, content, replyToId)
+  sendMessage: (chatId: string, content: string, replyToId?: string | null) => ipcRenderer.invoke('whatsapp-send-message', chatId, content, replyToId),
 };
 
 export type Api = typeof api
