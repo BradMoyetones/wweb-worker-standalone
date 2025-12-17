@@ -7,6 +7,7 @@ on:
 
 jobs:
   release:
+    permissions: contents: write # IMPORTANTE: Permiso para editar la release
     runs-on: ${{ matrix.os }}
     
     strategy:
@@ -49,3 +50,14 @@ jobs:
             npx electron-builder --linux --publish always
           fi
         shell: bash # Forzamos bash en Windows para que el 'if' funcione
+
+        # 2. NUEVO PASO: SUBIR LAS NOTAS (Solo en Linux para evitar conflictos)
+      - name: Update Release Notes
+        if: matrix.os == 'ubuntu-latest' # Solo Ubuntu se encarga del texto
+        uses: softprops/action-gh-release@v2
+        with:
+          # Ruta a tu archivo de notas
+          body_path: releases/notes/latest.md 
+          # Asegura que no borre los archivos que subieron Windows y Mac
+          append_body: false 
+          token: ${{ secrets.GH_TOKEN }}
