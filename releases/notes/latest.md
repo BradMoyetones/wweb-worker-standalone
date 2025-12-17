@@ -9,13 +9,12 @@ Lo que comenzó como un **bot de WhatsApp ejecutado desde consola**, basado en v
 ## 📥 Descargas
 
 | OS | Descarga Directa (Latest) |
-| :--- | :--- |
-| 🐧 **ALL VERSIONS** | [ALL VERSIONS](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest) * |
-
-| 🪟 **Windows** | [Descargar .exe](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-Setup-2.0.0.exe) * |
-| 🍎 **Mac (Silicon)** | [Descargar arm64.dmg](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.0.0-arm64.dmg) * |
-| 🍏 **Mac (Intel)** | [Descargar x64.dmg](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.0.0-x64.dmg) * |
-| 🐧 **Linux** | [Descargar .AppImage](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.0.0.AppImage) * |
+|----|--------------------------|
+| 🐧 **ALL VERSIONS** | [Ver todas las versiones](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest) |
+| 🪟 **Windows** | [Descargar .exe](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-Setup-2.0.0.exe) |
+| 🍎 **Mac (Silicon)** | [Descargar arm64.dmg](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.0.0-arm64.dmg) |
+| 🍏 **Mac (Intel)** | [Descargar x64.dmg](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.0.0-x64.dmg) |
+| 🐧 **Linux** | [Descargar .AppImage](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.0.0.AppImage) |
 
 ---
 
