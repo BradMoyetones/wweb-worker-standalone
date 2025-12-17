@@ -1,17 +1,21 @@
-import { EmojisType } from "../types/index";
+import { CronWithSteps, UpdateCronFormData } from "@app/types/crone.types";
+
+export type EmojisType = {
+    [key: string]: string;
+};
 
 export function getCurrentTime() {
     const now = new Date();
 
     let hours = now.getHours();
-    const minutes = now.getMinutes().toString().padStart(2, "0");
-    const ampm = hours >= 12 ? "PM" : "AM";
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
 
     // convertir a formato 12h
     hours = hours % 12;
     hours = hours ? hours : 12; // el 0 se convierte en 12
 
-    return `${hours.toString().padStart(2, "0")}:${minutes} ${ampm}`;
+    return `${hours.toString().padStart(2, '0')}:${minutes} ${ampm}`;
 }
 
 export function getCurrentTimeWithEmoji() {
@@ -19,37 +23,66 @@ export function getCurrentTimeWithEmoji() {
 
     let hours = now.getHours();
     let minutes = now.getMinutes();
-    const ampm = hours >= 12 ? "PM" : "AM";
+    const ampm = hours >= 12 ? 'PM' : 'AM';
 
     // convertir a 12h
     let displayHour = hours % 12;
     displayHour = displayHour ? displayHour : 12;
 
     // formato HH:MM
-    const formattedTime = `${displayHour.toString().padStart(2, "0")}:${minutes
-        .toString()
-        .padStart(2, "0")} ${ampm}`;
+    const formattedTime = `${displayHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
 
     // --- Mapeo de emojis ---
     const emojis: EmojisType = {
-        "1:00": "🕐", "1:30": "🕜",
-        "2:00": "🕑", "2:30": "🕝",
-        "3:00": "🕒", "3:30": "🕞",
-        "4:00": "🕓", "4:30": "🕟",
-        "5:00": "🕔", "5:30": "🕠",
-        "6:00": "🕕", "6:30": "🕡",
-        "7:00": "🕖", "7:30": "🕢",
-        "8:00": "🕗", "8:30": "🕣",
-        "9:00": "🕘", "9:30": "🕤",
-        "10:00": "🕙", "10:30": "🕥",
-        "11:00": "🕚", "11:30": "🕦",
-        "12:00": "🕛", "12:30": "🕧"
+        '1:00': '🕐',
+        '1:30': '🕜',
+        '2:00': '🕑',
+        '2:30': '🕝',
+        '3:00': '🕒',
+        '3:30': '🕞',
+        '4:00': '🕓',
+        '4:30': '🕟',
+        '5:00': '🕔',
+        '5:30': '🕠',
+        '6:00': '🕕',
+        '6:30': '🕡',
+        '7:00': '🕖',
+        '7:30': '🕢',
+        '8:00': '🕗',
+        '8:30': '🕣',
+        '9:00': '🕘',
+        '9:30': '🕤',
+        '10:00': '🕙',
+        '10:30': '🕥',
+        '11:00': '🕚',
+        '11:30': '🕦',
+        '12:00': '🕛',
+        '12:30': '🕧',
     };
 
     // decidir si redondear a la hora o media hora
-    const closestMinutes = minutes < 30 ? "00" : "30";
+    const closestMinutes = minutes < 30 ? '00' : '30';
     const key = `${displayHour}:${closestMinutes}`;
     const emoji = emojis[key];
 
     return `${formattedTime} ${emoji}`;
+}
+
+export function mapCronToForm(cron?: CronWithSteps): UpdateCronFormData | undefined {
+    if (!cron) return undefined;
+
+    return {
+        id: cron.id,
+        groupName: cron.groupName ?? '',
+        name: cron.name ?? '',
+        description: cron.description ?? '',
+        cronExpression: cron.cronExpression ?? '',
+        timezone: cron.timezone ?? 'America/Bogota',
+        isActive: cron.isActive ? true : false,
+        startAt: cron.startAt ?? undefined,
+        endAt: cron.endAt ?? undefined,
+        steps: cron.steps as any,
+        createdAt: cron.createdAt ? Number(cron.createdAt) : undefined,
+        updatedAt: cron.updatedAt ? Number(cron.updatedAt) : undefined,
+    };
 }

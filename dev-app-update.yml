@@ -1,0 +1,3 @@
+provider: generic
+url: https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest
+updaterCacheDirName: wweb-worker-standalone

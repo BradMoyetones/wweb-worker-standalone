@@ -1,0 +1,1 @@
+ALTER TABLE `cron_workflow_steps` DROP COLUMN `data_path`;
