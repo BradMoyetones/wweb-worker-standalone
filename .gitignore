@@ -7,3 +7,5 @@ out
 
 .wwebjs_*
 .env
+
+src/renderer/public/store
