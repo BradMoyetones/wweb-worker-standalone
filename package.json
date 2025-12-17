@@ -1,10 +1,10 @@
 {
-  "name": "template",
-  "version": "1.0.0",
-  "description": "An Electron application with React and TypeScript",
+  "name": "wweb-worker-standalone",
+  "version": "2.0.0",
+  "description": "Workflow-based cron engine that automates HTTP tasks and delivers results to WhatsApp groups.",
   "main": "./out/main/index.js",
-  "author": "example.com",
-  "homepage": "https://electron-vite.org",
+  "author": "itsbrad.dev",
+  "homepage": "https://itsbrad.dev",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",
