@@ -26,3 +26,6 @@ dev-dist
 
 .wwebjs_*
 .env
+
+.github
+out
