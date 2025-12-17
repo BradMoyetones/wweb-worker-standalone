@@ -1,0 +1,38 @@
+name: Release Electron App
+
+on:
+  push:
+    tags:
+      - 'v*' # Se ejecuta cuando subes un tag como v1.0.0, v1.0.1, etc.
+
+jobs:
+  release:
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        # Construye en Windows, Mac y Linux al mismo tiempo
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Instalamos pnpm (opcional, si usas npm omite este paso y usa npm install)
+      - name: Install dependencies
+        run: npm install
+
+      # Construcción y Publicación
+      - name: Build and Release
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }} # Toma el token que guardamos
+        run: |
+          npm run build
+          # Aquí llamamos al comando de electron-builder para publicar
+          # El flag -p always fuerza la publicación a GitHub
+          npx electron-builder --config electron-builder.yml --publish always

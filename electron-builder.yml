@@ -56,3 +56,5 @@ publish:
   repo: wweb-worker-standalone
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/
+releaseInfo:
+  releaseNotesFile: releases/notes/latest.md
