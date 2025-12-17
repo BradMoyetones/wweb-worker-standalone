@@ -23,11 +23,11 @@ createRoot(document.getElementById('root')!).render(
           <ActiveThemeProvider>
             <DataProvider>
               <RouterProvider router={router} />
-              <Toaster />
             </DataProvider>
           </ActiveThemeProvider>
         </WhatsAppProvider>
       </VersionProvider>
+      <Toaster />
     </ThemeProvider>
   </StrictMode>
 )
