@@ -20,20 +20,25 @@ asarUnpack:
 win:
   icon: resources/icon.png
   executableName: WWEBWorker
+  target:
+    - target: nsis
+      arch:
+        - x64
 nsis:
-  artifactName: ${name}-${version}-setup.${ext}
+  artifactName: ${name}-${version}-${arch}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   allowElevation: true
   createDesktopShortcut: always
   runAfterFinish: true
 mac:
+  category: public.app-category.productivity
   icon: resources/icon.png
   target: # Arquitecturas Intel y M
     - target: dmg
-      arch:
-        - x64
-        - arm64
+      arch: [x64, arm64]
+    - target: zip
+      arch: [x64, arm64]
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSSystemPolicyAllFiles: Application requires full system access.
@@ -45,16 +50,18 @@ mac:
   notarize: false
 dmg:
   icon: resources/icon.png
-  artifactName: ${name}-${version}.${ext}
+  artifactName: ${name}-${version}-${arch}.${ext}
 linux:
   icon: resources/icon.png
   target:
-    - AppImage # El estándar para Linux (funciona en todo lado)
-    - deb # Para Ubuntu/Debian
+    - target: AppImage # El estándar para Linux (funciona en todo lado)
+      arch: [x64] # Aseguramos x64
+    - target: deb # Para Ubuntu/Debian
+      arch: [x64]
   maintainer: electronjs.org
   category: Utility
 appImage:
-  artifactName: ${name}-${version}.${ext}
+  artifactName: ${name}-${version}-${arch}.${ext} # ${arch}
 npmRebuild: false
 publish:
   provider: github
