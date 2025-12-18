@@ -8,6 +8,7 @@ import { createCron, deleteCron, findCronById, getAllCrones, updateCron } from '
 import { scheduleCron, unscheduleCron } from '@app/lib/cronScheduler';
 import { sendToRenderer, setMainWindow } from '@app/lib/sendToRenderer';
 import { autoUpdater } from 'electron-updater';
+import cron from 'node-cron'
 import log from 'electron-log';
 
 log.transports.file.level = 'info';
@@ -85,6 +86,10 @@ app.whenReady().then(() => {
         // On macOS it's common to re-create a window in the app when the
         // dock icon is clicked and there are no other windows open.
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
+
+    cron.schedule('* * * * *', () => {
+        autoUpdater.checkForUpdatesAndNotify();
     });
 });
 
