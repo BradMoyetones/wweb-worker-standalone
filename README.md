@@ -22,19 +22,13 @@ WWEB Worker ha evolucionado de un simple script a una infraestructura completa d
 
 <div align="center">
 
-  **Windows x64 (Intel/AMD)** [![Windows](https://img.shields.io/badge/Descargar_Installer-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.0.0-x64-setup.exe)
+  [![Windows](https://img.shields.io/badge/Windows_x64_(Intel/AMD)-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.0.0-x64-setup.exe)
 
-  <br>
+  [![macOS Silicon](https://img.shields.io/badge/MacOS_Apple_Silicon_(M1/M2/M3)-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.0.0-arm64.dmg)
 
-  **macOS Apple Silicon (M1/M2/M3)** [![macOS Silicon](https://img.shields.io/badge/Descargar_DMG-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.0.0-arm64.dmg)
+  [![macOS Intel](https://img.shields.io/badge/MacOS_Intel-555555?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.0.0-x64.dmg)
 
-  <br>
-
-  **macOS Intel** [![macOS Intel](https://img.shields.io/badge/Descargar_DMG-555555?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.0.0-x64.dmg)
-
-  <br>
-
-  **Linux Universal (AppImage)** [![Linux](https://img.shields.io/badge/Descargar_AppImage-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.0.0-x86_64.AppImage)
+  [![Linux](https://img.shields.io/badge/Linux_Universal_(AppImage)-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.0.0-x86_64.AppImage)
 
 </div>
 
@@ -54,7 +48,7 @@ Desarrollado con ❤️ por **Brad Moyetones**.
 
 <div align="center">
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/tu-perfil-aqui) 
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/brad-moyetones) 
 [![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/BradMoyetones)
 
 </div>
