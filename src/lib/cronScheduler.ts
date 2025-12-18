@@ -1,50 +1,59 @@
-import cron from 'node-cron';
-import { registerCron, stopCron, hasCron } from './cronRegistry';
-import { runCronJob } from './runCronJob';
-import { CronWithSteps } from '@app/types/crone.types';
-import { sendToRenderer } from './sendToRenderer';
-import { mapCronToForm } from '@app/utils/helpers';
-import { updateCron } from '@app/models/crones';
+import cron from "node-cron"
+import { cronRegistry } from "@app/main/services/CronRegistry"
+import type { CronWithSteps } from "@app/types/crone.types"
 
-export function scheduleCron(cronConfig: CronWithSteps) {
-    if (!cronConfig.isActive) return;
-    if (hasCron(cronConfig.id)) return;
+let cronExecutor: any = null
 
-    const task = cron.schedule(
-        cronConfig.cronExpression,
-        async () => {
-            const now = Date.now();
-            // Todavía no empieza
-            if (cronConfig.startAt && now < cronConfig.startAt) return;
-
-            // Ya expiró
-            if (cronConfig.endAt && now > cronConfig.endAt) {
-                unscheduleCron(cronConfig.id);
-                const parsedToForm = mapCronToForm(cronConfig)!;
-
-                let updated = await updateCron(cronConfig.id, {
-                    ...parsedToForm,
-                    isActive: false,
-                    status: 'stopped',
-                });
-                sendToRenderer('cron-updated', updated)
-                
-                return;
-            }
-
-            await runCronJob(cronConfig);
-        },
-        {
-            timezone: cronConfig.timezone!,
-        }
-    );
-
-    registerCron(cronConfig.id, task);
-
-    console.log(`🟢 Cron registrado: ${cronConfig.name}`);
+export function setCronExecutor(executor: any): void {
+  cronExecutor = executor
 }
 
-export function unscheduleCron(cronId: string) {
-    stopCron(cronId);
-    console.log(`🟡 Cron detenido: ${cronId}`);
+export function scheduleCron(cronConfig: CronWithSteps): void {
+  if (!cronConfig.isActive) {
+    console.log(`[CronScheduler] Cron not active, skipping: ${cronConfig.name}`)
+    return
+  }
+
+  if (cronRegistry.has(cronConfig.id)) {
+    console.log(`[CronScheduler] Cron already scheduled, rescheduling: ${cronConfig.name}`)
+    unscheduleCron(cronConfig.id)
+  }
+
+  const task = cron.schedule(
+    cronConfig.cronExpression,
+    async () => {
+      const now = Date.now()
+
+      if (cronConfig.startAt && now < cronConfig.startAt) {
+        console.log(`[CronScheduler] Cron not started yet: ${cronConfig.name}`)
+        return
+      }
+
+      if (cronConfig.endAt && now > cronConfig.endAt) {
+        console.log(`[CronScheduler] Cron expired, stopping: ${cronConfig.name}`)
+        unscheduleCron(cronConfig.id)
+        return
+      }
+
+      if (cronExecutor) {
+        await cronExecutor.execute(cronConfig)
+      } else {
+        console.error("[CronScheduler] CronExecutor not set!")
+      }
+    },
+    {
+      timezone: cronConfig.timezone || "America/New_York",
+    },
+  )
+
+  cronRegistry.register(cronConfig.id, task)
+  console.log(`[CronScheduler] Scheduled: ${cronConfig.name}`)
+}
+
+export function unscheduleCron(cronId: string): void {
+  cronRegistry.stop(cronId)
+}
+
+export function unscheduleAllCrons(): void {
+  cronRegistry.stopAll()
 }

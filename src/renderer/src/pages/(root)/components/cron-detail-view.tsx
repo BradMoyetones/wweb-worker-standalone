@@ -99,6 +99,8 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
     }
 
     const onSubmit = async (data: UpdateCronFormData) => {
+        console.log("DATA ENVIADA AL BACKEND", data);
+        
         setIsSaving(true);
         // await new Promise((resolve) => setTimeout(resolve, 800));
         toast.promise(window.api.updateCron(cron?.id ?? '', data), {

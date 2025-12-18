@@ -74,6 +74,8 @@ async function findCronById(id: string): Promise<CronWithSteps | null> {
 
 async function updateCron(id: string, input: UpdateCronFormData): Promise<CronWithSteps | null> {
   const db = await getDb();
+  console.log("INPUT EN DB", input);
+  
 
   // Update cron_config
   await db

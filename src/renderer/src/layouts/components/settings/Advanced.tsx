@@ -1,9 +1,8 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useVersion } from "@/contexts";
 
 export default function Advanced() {
-    const { appVersion, downloadProgress, updateAvailable } = useVersion();
+    const { appVersion } = useVersion();
 
     return (
         <div>
@@ -13,28 +12,17 @@ export default function Advanced() {
                 <div className="flex gap-4">
                     <Card className="w-full border-border">
                         <CardContent>
-                            <h3 className="flex items-center gap-2 mb-4">
+                            {/* <h3 className="flex items-center gap-2 mb-4">
                                 {appVersion}
-                            </h3>
-                            <p className="text-muted-foreground mb-4">
+                            </h3> */}
+                            <p className="text-muted-foreground">
                                 <span>Current version: </span> {appVersion}
                             </p>
-                            <div className="flex gap-2">
+                            {/* <div className="flex gap-2">
                                 <Button>
                                     Verify version
                                 </Button>
-                                <pre>
-                                    <code>
-                                        {JSON.stringify(updateAvailable, null, 2)}
-                                    </code>
-                                </pre>
-
-                                <pre>
-                                    <code>
-                                        {JSON.stringify(downloadProgress, null, 2)}
-                                    </code>
-                                </pre>
-                            </div>
+                            </div> */}
                         </CardContent>
                     </Card>
                 </div>
