@@ -47,7 +47,8 @@ jobs:
           if [ "$RUNNER_OS" == "Windows" ]; then
             npx electron-builder --win --publish always -c.publish.releaseType=release
           elif [ "$RUNNER_OS" == "macOS" ]; then
-            npx electron-builder --mac --publish always -c.publish.releaseType=release
+            # Agregamos --universal para que soporte Intel y Apple Silicon
+            npx electron-builder --mac --universal --publish always -c.publish.releaseType=release
           else
             npx electron-builder --linux --publish always -c.publish.releaseType=release
           fi

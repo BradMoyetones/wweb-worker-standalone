@@ -1,6 +1,6 @@
 {
   "name": "wweb-worker-standalone",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Workflow-based cron engine that automates HTTP tasks and delivers results to WhatsApp groups.",
   "main": "./out/main/index.js",
   "author": "itsbrad.dev",
@@ -18,7 +18,7 @@
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win",
-    "build:mac": "electron-vite build && electron-builder --mac",
+    "build:mac": "electron-vite build && electron-builder --mac --universal",
     "build:linux": "electron-vite build && electron-builder --linux",
     "rebuild": "electron-rebuild -f -w better-sqlite3",
     "db:generate": "npx drizzle-kit generate"
