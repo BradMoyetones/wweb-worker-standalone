@@ -20,12 +20,13 @@ export class WindowController {
                 sandbox: false,
                 contextIsolation: true,
                 nodeIntegration: false,
-                devTools: is.dev,
+                devTools: true,
             },
         });
 
         this.setupWindowEvents();
         this.loadContent();
+        this.hookLogs()
 
         return this.mainWindow;
     }
@@ -87,5 +88,37 @@ export class WindowController {
 
     close(): void {
         this.mainWindow?.close();
+    }
+
+    private hookLogs() {
+        if (!this.mainWindow) return;
+
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        console.log = (...args) => {
+            originalLog(...args);
+            if (!this.mainWindow?.webContents.isDestroyed()) {
+                this.mainWindow?.webContents.send('app-log', {
+                    type: 'info',
+                    message: args.join(' '),
+                    time: new Date().toLocaleTimeString(),
+                });
+            }
+        };
+
+        console.error = (...args) => {
+            originalError(...args);
+            if (!this.mainWindow?.webContents.isDestroyed()) {
+                this.mainWindow?.webContents.send('app-log', {
+                    type: 'error',
+                    message: args.join(' '),
+                    time: new Date().toLocaleTimeString(),
+                });
+            }
+        };
+
+        // Haz lo mismo con console.warn si quieres
     }
 }

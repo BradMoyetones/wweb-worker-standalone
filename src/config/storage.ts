@@ -2,6 +2,7 @@ import { is } from '@electron-toolkit/utils';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
+import { app } from 'electron';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -9,17 +10,20 @@ const basePath = is.dev
   ? path.join(__dirname, '../../src/renderer/public')
   : path.join(process.resourcesPath, 'app.asar.unpacked', 'out', 'renderer');
 
+// 2. RUTA DE LECTURA (Migraciones)
+// Estas viven dentro del paquete, son de solo lectura.
 const getMigrationsPath = () => {
-  if (is.dev) {
-    return path.join(__dirname, '../../drizzle/migrations');
+  if (!app.isPackaged) {
+    // Ajusta esta ruta a donde realmente están tus carpetas en desarrollo
+    return path.join(app.getAppPath(), 'drizzle', 'migrations');
   }
 
+  // En producción usamos asar.unpacked
   return path.join(
     process.resourcesPath,
     'app.asar.unpacked',
-    'out',
     'drizzle',
-    'migrations'
+    'migrations' // Quitamos el 'out/renderer' porque esto es lógica de main
   );
 };
 
@@ -30,7 +34,7 @@ const forceCopy = (source: string, destination: string) => {
   try {
     if (fs.lstatSync(source).isDirectory()) {
       if (!fs.existsSync(destination)) {
-        fs.mkdirSync(destination, { recursive: true });
+        fs.mkdirSync(destination, { recursive: true, });
       }
 
       const files = fs.readdirSync(source);
@@ -66,12 +70,19 @@ const forceDelete = (target: string) => {
   }
 };
 
+// 1. RUTA DE ESCRITURA (Base de datos)
+// En producción irá a: %APPDATA%/tu-app/wweb_store/
 const getStorePath = async (): Promise<string> => {
-  const storePath = path.join(basePath, 'store');
-  if (!fs.existsSync(storePath)) {
-    fs.mkdirSync(storePath, { recursive: true });
+  const isDev = !app.isPackaged;
+  
+  const storageDir = isDev
+    ? path.join(app.getAppPath(), 'database') // En dev: carpeta local
+    : path.join(app.getPath('userData'), 'database'); // En prod: carpeta de sistema segura
+
+  if (!fs.existsSync(storageDir)) {
+    fs.mkdirSync(storageDir, { recursive: true });
   }
-  return storePath;
+  return storageDir;
 };
 
 

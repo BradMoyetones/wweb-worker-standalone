@@ -138,6 +138,10 @@ export function registerIpcHandlers(
         return await databaseController.getAllCrones();
     });
 
+    ipcMain.handle('createCron', async (event, id, input) => {
+        return await databaseController.createCron(input);
+    });
+
     ipcMain.handle('updateCron', async (event, id, input) => {
         return await databaseController.updateCron(id, input);
     });
@@ -166,6 +170,14 @@ export function registerIpcHandlers(
         } catch (err: any) {
             return { success: false, error: err.message };
         }
+    });
+
+    ipcMain.handle('exportCrons', async (event, ids: string[]) => {
+        return await databaseController.exportCrons(ids);
+    });
+
+    ipcMain.handle('importCrons', async () => {
+        return await databaseController.importCrons();
     });
 
     // Update handlers

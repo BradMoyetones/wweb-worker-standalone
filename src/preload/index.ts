@@ -17,6 +17,9 @@ const api = {
     ipcRenderer.on("maximize-changed", (_, value) => callback(value));
   },
 
+  onLog: (callback: (log: { type: 'info' | 'error'; message: string; time: string }) => void) => {
+    ipcRenderer.on('app-log', (_, log) => callback(log));
+  },
   // ---------------------------------------------------
   // App info
   // ---------------------------------------------------
@@ -43,6 +46,17 @@ const api = {
   onCronDeleted: (callback: (cronId: string) => void) => {
     ipcRenderer.on("cron-deleted", (_, cronId) => callback(cronId))
   },
+
+  exportCrons: (ids: string[]): Promise<{ 
+    success: boolean; 
+    message?: string | undefined 
+  }> => ipcRenderer.invoke("exportCrons", ids),
+  importCrons: (): Promise<{
+    success: boolean;
+    imported: CronWithSteps[];
+    message?: string;
+  }> => ipcRenderer.invoke("importCrons"),
+
 
   // ---------------------------------------------------
   // Updater

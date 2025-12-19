@@ -15,12 +15,15 @@ import { VersionProvider } from './contexts/VersionContext';
 import { DataProvider, WhatsAppProvider } from './contexts';
 import { Toaster } from './components/ui/sonner';
 import { ThemeProvider as NextThemesProvider } from "next-themes"
+import { ConsoleTerminal } from './components/ConsoleTerminal';
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <NextThemesProvider attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange>
+    <NextThemesProvider 
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
       <VersionProvider>
         <WhatsAppProvider>
           <ActiveThemeProvider>
@@ -31,6 +34,7 @@ createRoot(document.getElementById('root')!).render(
         </WhatsAppProvider>
       </VersionProvider>
       <Toaster />
+      <ConsoleTerminal />
     </NextThemesProvider>
   </StrictMode>
 )

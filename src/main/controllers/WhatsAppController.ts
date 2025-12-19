@@ -36,12 +36,21 @@ export class WhatsAppController extends EventEmitter {
         contacts: [],
     };
     private sessionPath: string;
+    private cachePath: string;
     private isInitializing = false;
 
     constructor() {
         super();
         const userDataPath = app.getPath('userData');
         this.sessionPath = path.join(userDataPath, 'wwebjs_auth');
+
+        // Definimos la ruta de la caché dentro de userData
+        this.cachePath = path.join(userDataPath, '.wwebjs_cache'); 
+        
+        // Crear la carpeta si no existe
+        if (!fs.existsSync(this.cachePath)) {
+            fs.mkdirSync(this.cachePath, { recursive: true });
+        }
     }
 
     async initialize(webContents: WebContents): Promise<void> {
@@ -89,11 +98,18 @@ export class WhatsAppController extends EventEmitter {
 
         const execPath = await getChromiumPath(() => {});
 
+        console.log("[WhatsApp] Session path:", this.sessionPath);
+        console.log("[WhatsApp] Cache path:", this.cachePath);
+        
         this.client = new Client({
             authStrategy: new LocalAuth({
                 clientId: 'wweb-worker',
                 dataPath: this.sessionPath,
             }),
+            webVersionCache: {
+                type: "local",
+                path: this.cachePath
+            },
             puppeteer: {
                 executablePath: execPath,
                 headless: true,

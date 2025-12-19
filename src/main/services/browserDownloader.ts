@@ -5,6 +5,7 @@ import fs from 'fs';
 
 export const getChromiumPath = async (onProgress: (percent: number) => void) => {
     const downloadPath = path.join(app.getPath('userData'), 'browser-bin');
+    const chromiumBaseDir = path.join(downloadPath, Browser.CHROMIUM); // Ruta: .../browser-bin/chromium
     
     // 1. Detectar plataforma
     let platform: BrowserPlatform;
@@ -16,36 +17,44 @@ export const getChromiumPath = async (onProgress: (percent: number) => void) => 
         platform = BrowserPlatform.LINUX;
     }
 
-    // 2. Resolver Build ID
+    // 2. Resolver Build ID más reciente
     const buildId = await resolveBuildId(Browser.CHROMIUM, platform, 'latest');
+    const currentFolderName = `${platform}-${buildId}`;
+    const installPath = path.join(chromiumBaseDir, currentFolderName);
 
-    // 3. Definir rutas
+    // --- CLEANUP: Borrar versiones obsoletas ---
+    if (fs.existsSync(chromiumBaseDir)) {
+        const existingVersions = fs.readdirSync(chromiumBaseDir);
+        
+        for (const folder of existingVersions) {
+            if (folder !== currentFolderName) {
+                const oldPath = path.join(chromiumBaseDir, folder);
+                console.log(`[BROWSER] Limpiando versión antigua: ${folder}`);
+                try {
+                    // Borramos carpetas que no sean la actual
+                    fs.rmSync(oldPath, { recursive: true, force: true });
+                } catch (err) {
+                    console.error(`[BROWSER] No se pudo borrar la versión antigua ${folder}:`, err);
+                }
+            }
+        }
+    }
+    // --------------------------------------------
+
+    // 3. Definir ruta del ejecutable
     const executableName = process.platform === 'win32' ? 'chrome.exe' : 'Chromium';
-    const installPath = path.join(downloadPath, Browser.CHROMIUM, `${platform}-${buildId}`);
 
     const possibleExecPath = process.platform === 'darwin'
         ? path.join(installPath, 'chrome-mac/Chromium.app/Contents/MacOS/Chromium')
         : path.join(installPath, `chrome-${platform}`, executableName);
 
-    // --- EL FIX RECURSIVO ---
+    // Verificar si ya existe el actual
     if (fs.existsSync(possibleExecPath)) {
-        console.log('[BROWSER] Ejecutable verificado:', possibleExecPath);
+        console.log('[BROWSER] Ejecutable actual verificado:', possibleExecPath);
         return possibleExecPath;
     } 
-    
-    // Si la carpeta existe pero llegamos aquí, es que el ejecutable NO está.
-    // Limpiamos la carpeta corrupta para que `install` no se queje.
-    if (fs.existsSync(installPath)) {
-        console.log('[BROWSER] Carpeta corrupta detectada, limpiando...', installPath);
-        try {
-            fs.rmSync(installPath, { recursive: true, force: true });
-        } catch (e) {
-            console.error('[BROWSER] No se pudo limpiar la carpeta:', e);
-        }
-    }
-    // ------------------------
 
-    console.log('[BROWSER] Iniciando descarga limpia para plataforma:', platform);
+    console.log('[BROWSER] Iniciando descarga limpia de la última versión:', currentFolderName);
 
     const result = await install({
         browser: Browser.CHROMIUM,
