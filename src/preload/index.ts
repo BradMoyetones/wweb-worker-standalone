@@ -6,8 +6,9 @@ import { ProgressInfo, UpdateDownloadedEvent, UpdateInfo } from 'electron-update
 
 // Custom APIs for renderer
 const api = {
-  
-
+  // ---------------------------------------------------
+  // Window controls
+  // ---------------------------------------------------
   minimize: () => ipcRenderer.send("minimize"),
   maximize: () => ipcRenderer.invoke("maximize"),
   isMaximized: () => ipcRenderer.invoke("isMaximized"),
@@ -16,25 +17,36 @@ const api = {
     ipcRenderer.on("maximize-changed", (_, value) => callback(value));
   },
 
-  // DATABASE DATA
+  // ---------------------------------------------------
+  // App info
+  // ---------------------------------------------------
+  getAppVersion: () => ipcRenderer.invoke("get-app-version"),
+  getPlatform: () => ipcRenderer.invoke("get-platform"),
+  getReleaseNotes: (): Promise<string> => ipcRenderer.invoke("get-release-notes"),
+
+  // ---------------------------------------------------
+  // DATABASE DATA AND CRONES
+  // ---------------------------------------------------
   getAllCrones: (): Promise<CronWithSteps[]> => ipcRenderer.invoke('getAllCrones'),
   createCron: (input: CreateCronFormData): Promise<CronWithSteps> => ipcRenderer.invoke('createCron', input),
   findCronById: (id: string): Promise<CronWithSteps | null> => ipcRenderer.invoke('findCronById', id),
   updateCron: (id: string, input: UpdateCronFormData): Promise<CronWithSteps | null> => ipcRenderer.invoke('updateCron', id, input),
   deleteCron: (cron: CronWithSteps): Promise<{ success: boolean }> => ipcRenderer.invoke('deleteCron', cron),
+  toggleCron: (id: string, isActive: boolean): Promise<CronWithSteps | null> => ipcRenderer.invoke("toggleCron", id, isActive),
+
+  executeNow: (cronId: string) => ipcRenderer.invoke("executeCronNow", cronId),
 
   // Eventos
   onCronUpdated: (callback: (cron: CronWithSteps) => void) => {
     ipcRenderer.on('cron-updated', (_e, cron) => callback(cron));
   },
+  onCronDeleted: (callback: (cronId: string) => void) => {
+    ipcRenderer.on("cron-deleted", (_, cronId) => callback(cronId))
+  },
 
   // ---------------------------------------------------
   // Updater
   // ---------------------------------------------------
-
-  getAppVersion: () => ipcRenderer.invoke("get-app-version"),
-  getPlatform: () => ipcRenderer.invoke("get-platform"),
-
   // Evento: Actualización disponible
   onUpdateAvailable: (callback: (info: UpdateInfo) => void) => 
     ipcRenderer.on('update-available', (_event, value) => callback(value)),
@@ -67,7 +79,7 @@ const whatsappApi = {
   init: () => ipcRenderer.invoke('whatsapp-init'),
   
   // Escucha cambios de estado: qr, ready, loading, auth_failure, disconnected
-  onStatus: (callback: (data: { status: string; qr?: string; error?: string, progress?: number }) => void) => {
+  onStatus: (callback: (data: { status: string; qr?: string; error?: string; progress?: number; message?: string }) => void) => {
     ipcRenderer.on('whatsapp-status', (_, data) => callback(data));
   },
 
@@ -94,6 +106,11 @@ const whatsappApi = {
   getMessagesChat: (chatId: string) => ipcRenderer.invoke('whatsapp-get-messages', chatId),
   downloadMedia: (messageId: string, chatId: string) => ipcRenderer.invoke('whatsapp-download-media', messageId, chatId),
   sendMessage: (chatId: string, content: string, replyToId?: string | null) => ipcRenderer.invoke('whatsapp-send-message', chatId, content, replyToId),
+
+  resetSession: () => ipcRenderer.invoke("whatsapp-reset-session"),
+  logout: () => ipcRenderer.invoke('whatsapp-logout'),
+  exportSession: (): Promise<{success: boolean, message?: string}> => ipcRenderer.invoke('whatsapp-export-session'),
+  importSession: () => ipcRenderer.invoke('whatsapp-import-session'),
 };
 
 export type Api = typeof api

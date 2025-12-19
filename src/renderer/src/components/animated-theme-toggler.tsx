@@ -6,7 +6,7 @@ import { flushSync } from "react-dom"
 import { cn } from "@/lib/utils"
 import { Button } from "./ui/button"
 import ThemeIcon from "./icons/theme-icon"
-import { useTheme } from "./theme-provider"
+import { useTheme } from "next-themes"
 
 interface AnimatedThemeTogglerProps
   extends React.ComponentPropsWithoutRef<typeof Button> {

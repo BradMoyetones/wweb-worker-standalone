@@ -15,8 +15,8 @@ export const cronConfigSchema = z.object({
             "Expresión cron inválida (ej: '0 0 * * *')"
         ),
     timezone: z.string().min(1, 'Zona horaria requerida'),
-    startAt: z.number().optional(), // timestamp - null = inmediato
-    endAt: z.number().optional(), // timestamp - null = infinito
+    startAt: z.number().optional().nullable(), // timestamp - null = inmediato
+    endAt: z.number().optional().nullable(), // timestamp - null = infinito
     isActive: z.boolean(),
     status: z.string().optional(),
 

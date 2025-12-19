@@ -1,9 +1,11 @@
+import { DBCronWorkflowStep } from "@app/types/crone.types";
+
 export interface WorkflowContext {
     cookies: Record<string, string>;
     steps: Record<string, any>;
 }
 
-export function resolveTemplate(value: string, ctx: WorkflowContext): string {
+function resolveTemplate(value: string, ctx: WorkflowContext): string {
     if (typeof value !== 'string') return value as any;
 
     return value.replace(/\{\{(.*?)\}\}/g, (_, path) => {
@@ -19,7 +21,7 @@ export function resolveTemplate(value: string, ctx: WorkflowContext): string {
     });
 }
 
-function buildBody(step: any, ctx: WorkflowContext) {
+function buildBody(step: any, ctx: WorkflowContext): string | undefined {
     if (!step.body || step.bodyType === 'none') return undefined;
 
     const raw = JSON.parse(step.body);
@@ -40,7 +42,7 @@ function buildBody(step: any, ctx: WorkflowContext) {
     return undefined;
 }
 
-function buildHeaders(step: any, ctx: WorkflowContext) {
+function buildHeaders(step: any, ctx: WorkflowContext): Record<string, string> {
     if (!step.headers) return {};
 
     const raw = JSON.parse(step.headers);
@@ -61,7 +63,7 @@ function applyExtractors(
         raw: string;
     },
     ctx: WorkflowContext
-) {
+): void {
     if (!extract) return;
 
     for (const target in extract) {
@@ -74,12 +76,10 @@ function applyExtractors(
 
         if (!value) continue;
 
-        // Transformaciones SEGURAS
         if (rule.transform === 'split:semicolon') {
             value = value.split(';')[0];
         }
 
-        // Guardar en contexto (cookies.session)
         const path = target.split('.');
         let current: any = ctx;
 
@@ -92,14 +92,16 @@ function applyExtractors(
     }
 }
 
-export async function runWorkflow(steps: any[]) {
+export async function runWorkflow(steps: DBCronWorkflowStep[]): Promise<WorkflowContext> {
     const ctx: WorkflowContext = {
         cookies: {},
         steps: {},
     };
 
-    for (const step of steps.sort((a, b) => a.stepOrder - b.stepOrder)) {
-        console.log(`▶️ Step ${step.stepOrder}: ${step.name}`);
+    const sortedSteps = [...steps].sort((a, b) => a.stepOrder - b.stepOrder);
+
+    for (const step of sortedSteps) {
+        console.log(`[Workflow] Executing step ${step.stepOrder}: ${step.name}`);
 
         const headers = buildHeaders(step, ctx);
         const body = buildBody(step, ctx);
@@ -127,9 +129,13 @@ export async function runWorkflow(steps: any[]) {
             },
             ctx
         );
+        // const allowedStatus: number[] =
+        //     step.allowedStatus ?? [200, 201, 204];
 
-        if (!res.ok) {
-            throw new Error(`Step "${step.name}" falló con status ${res.status}`);
+        const allowedStatus: number[] = [200, 201, 204, 302];
+
+        if (!allowedStatus.includes(res.status)) {
+            throw new Error(`Step "${step.name}" failed with status ${res.status}`);
         }
     }
 

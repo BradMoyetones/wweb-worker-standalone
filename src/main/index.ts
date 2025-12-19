@@ -1,305 +1,81 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron';
-import { join } from 'path';
-import { electronApp, optimizer, is } from '@electron-toolkit/utils';
-import icon from '../../resources/icon.png?asset';
-import { initializeClient } from '@app/lib/whatsappClient';
-import { Client } from 'whatsapp-web.js';
-import { createCron, deleteCron, findCronById, getAllCrones, updateCron } from '@app/models/crones';
-import { scheduleCron, unscheduleCron } from '@app/lib/cronScheduler';
-import { sendToRenderer, setMainWindow } from '@app/lib/sendToRenderer';
-import { autoUpdater } from 'electron-updater';
-import cron from 'node-cron'
-import log from 'electron-log';
+import { app, BrowserWindow } from 'electron';
+import { electronApp, optimizer } from '@electron-toolkit/utils';
+import { WindowController } from './controllers/WindowController';
+import { WhatsAppController } from './controllers/WhatsAppController';
+import { UpdateController } from './controllers/UpdateController';
+import { DatabaseController } from './controllers/DatabaseController';
+import { registerIpcHandlers } from './handlers/ipcHandlers';
 
-log.transports.file.level = 'info';
-autoUpdater.logger = log;
+const windowController = new WindowController();
+const whatsappController = new WhatsAppController();
+const updateController = new UpdateController();
+const databaseController = new DatabaseController(whatsappController);
 
-function createWindow(): void {
-    // Create the browser window.
-    const mainWindow = new BrowserWindow({
-        width: 900,
-        height: 670,
-        minWidth: 800,
-        minHeight: 600,
-        show: false,
-        autoHideMenuBar: true,
-        ...(process.platform === 'linux' ? { icon } : {}),
-        webPreferences: {
-            preload: join(__dirname, '../preload/index.js'),
-            sandbox: false,
-            contextIsolation: true, // Asegúrate de que esté en true
-            nodeIntegration: false, // Esto debe estar en false para evitar problemas de seguridad
-            devTools: is.dev,
-        },
+function setupControllers(): void {
+    whatsappController.on('whatsapp-ready', () => {
+        console.log('[Main] WhatsApp is ready, initializing crons...');
+        const window = windowController.getWindow();
+        if (window && !window.isDestroyed()) {
+            databaseController.initializeCrons(window?.webContents);
+        }
     });
 
-    setMainWindow(mainWindow);
-
-    mainWindow.on('ready-to-show', () => {
-        mainWindow.show();
+    updateController.on('update-available', (info) => {
+        const window = windowController.getWindow();
+        if (window && !window.isDestroyed()) {
+            window.webContents.send('update-available', info);
+        }
     });
 
-    mainWindow.webContents.setWindowOpenHandler((details) => {
-        shell.openExternal(details.url);
-        return { action: 'deny' };
+    updateController.on('download-progress', (progress) => {
+        const window = windowController.getWindow();
+        if (window && !window.isDestroyed()) {
+            window.webContents.send('download-progress', progress);
+        }
     });
 
-    mainWindow.on('maximize', () => {
-        mainWindow.webContents.send('maximize-changed', true);
+    updateController.on('update-downloaded', (info) => {
+        const window = windowController.getWindow();
+        if (window && !window.isDestroyed()) {
+            window.webContents.send('update-downloaded', info);
+        }
     });
 
-    mainWindow.on('unmaximize', () => {
-        mainWindow.webContents.send('maximize-changed', false);
+    updateController.on('update-error', (err) => {
+        const window = windowController.getWindow();
+        if (window && !window.isDestroyed()) {
+            window.webContents.send('update-error', err);
+        }
     });
-
-    // HMR for renderer base on electron-vite cli.
-    // Load the remote URL for development or the local html file for production.
-    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-        mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
-    } else {
-        // Error que me dio en producción
-        // mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
-        mainWindow.loadFile(join(process.resourcesPath, 'app.asar.unpacked', 'out', 'renderer', 'index.html'));
-    }
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-    // Set app user model id for windows
     electronApp.setAppUserModelId('com.electron');
 
-    // Default open or close DevTools by F12 in development
-    // and ignore CommandOrControl + R in production.
-    // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
     app.on('browser-window-created', (_, window) => {
         optimizer.watchWindowShortcuts(window);
     });
 
-    // IPC test
-    ipcMain.on('ping', () => console.log('pong'));
+    setupControllers();
+    registerIpcHandlers(windowController, whatsappController, updateController, databaseController);
 
-    createWindow();
+    const mainWindow = windowController.createWindow();
 
-    app.on('activate', function () {
-        // On macOS it's common to re-create a window in the app when the
-        // dock icon is clicked and there are no other windows open.
-        if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    mainWindow.webContents.once('did-finish-load', () => {
+        console.log('[Main] Renderer loaded, starting update checks...');
+        updateController.startUpdateChecks(mainWindow.webContents);
     });
 
-    cron.schedule('* * * * *', () => {
-        autoUpdater.checkForUpdatesAndNotify();
+    app.on('activate', () => {
+        if (BrowserWindow.getAllWindows().length === 0) {
+            windowController.createWindow();
+        }
     });
 });
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
+        updateController.stopUpdateChecks();
         app.quit();
     }
-});
-
-ipcMain.handle('get-app-version', () => {
-    return app.getVersion();
-});
-
-ipcMain.handle('get-platform', () => process.platform);
-
-ipcMain.on('minimize', () => {
-    const focusedWindow = BrowserWindow.getFocusedWindow();
-    if (focusedWindow) {
-        focusedWindow.minimize();
-    }
-});
-
-let isMaximized: boolean = false;
-ipcMain.handle('maximize', () => {
-    const focusedWindow = BrowserWindow.getFocusedWindow();
-    if (focusedWindow) {
-        if (focusedWindow.isMaximized()) {
-            focusedWindow.unmaximize();
-            isMaximized = false;
-        } else {
-            focusedWindow.maximize();
-            isMaximized = true;
-        }
-    }
-    return isMaximized;
-});
-ipcMain.handle('isMaximized', () => {
-    const focusedWindow = BrowserWindow.getFocusedWindow();
-    if (focusedWindow) {
-        return focusedWindow.isMaximized();
-    }
-    return false;
-});
-
-ipcMain.on('close', () => {
-    app.quit();
-});
-
-// WHATSAPP
-ipcMain.handle('whatsapp-init', async (event) => {
-    try {
-        await initializeClient(event.sender);
-        return { success: true };
-    } catch (err: any) {
-        return { success: false, error: err.message };
-    }
-});
-
-ipcMain.handle('whatsapp-get-messages', async (event, chatId: string) => {
-    try {
-        const client = (await initializeClient(event.sender)) as Client | null;
-        if (!client) return;
-
-        const chat = await client.getChatById(chatId);
-        const messages = await chat.fetchMessages({ limit: 100 }); // últimos 50
-        return messages;
-    } catch (err) {
-        console.error('Error fetching messages', err);
-        return [];
-    }
-});
-
-ipcMain.handle('whatsapp-download-media', async (event, messageId: string, chatId: string) => {
-    try {
-        const client = (await initializeClient(event.sender)) as Client | null;
-        if (!client) return null;
-
-        const chat = await client.getChatById(chatId);
-        const messages = await chat.fetchMessages({ limit: 50 });
-
-        const message = messages.find((m) => m.id._serialized === messageId);
-        if (!message) return null;
-
-        if (!message.hasMedia) {
-            return { error: 'No media in message' };
-        }
-
-        const media = await message.downloadMedia();
-        if (!media) {
-            return { error: 'Failed to download media' };
-        }
-
-        return media;
-    } catch (err: any) {
-        console.error('Error downloading media', err);
-        return { error: err.message };
-    }
-});
-
-ipcMain.handle('whatsapp-send-message', async (event, chatId: string, content: string, replyToId?: string | null) => {
-    try {
-        const client = (await initializeClient(event.sender)) as Client | null;
-        if (!client) return { error: 'No client initialized' };
-
-        const chat = await client.getChatById(chatId);
-        if (!chat) return { error: 'Chat not found' };
-
-        if (replyToId) {
-            // buscar el mensaje al que queremos responder
-            const messages = await chat.fetchMessages({ limit: 100 }); // búscalo en los últimos 100 por si acaso
-            const msgToReply = messages.find((m) => m.id._serialized === replyToId);
-
-            if (!msgToReply) {
-                return { error: 'Message to reply not found' };
-            }
-
-            await msgToReply.reply(content, chatId);
-            return { success: true, replied: true };
-        } else {
-            await client.sendMessage(chatId, content);
-            return { success: true, replied: false };
-        }
-    } catch (err: any) {
-        console.error('Error sending message', err);
-        return { error: err.message };
-    }
-});
-
-// DATABASE
-ipcMain.handle('getAllCrones', async (_event) => {
-    const crones = await getAllCrones();
-
-    // Prueba de arranque de workflows
-    // crones.map(async(cron, i) => {
-    //   const runned = await runWorkflow(cron.steps)
-    //   console.log(`Cron ${i} Runned: `, runned);
-
-    // })
-
-    return crones;
-});
-
-ipcMain.handle('createCron', async (_event, input) => {
-    return await createCron(input);
-});
-
-ipcMain.handle('findCronById', async (_event, id) => {
-    return await findCronById(id);
-});
-
-ipcMain.handle('updateCron', async (_event, id, input) => {
-    const updated = await updateCron(id, input);
-
-    if (!updated) return null;
-
-    if (updated.isActive) {
-        scheduleCron(updated);
-    } else {
-        unscheduleCron(updated.id);
-    }
-
-    return updated;
-});
-
-ipcMain.handle('deleteCron', async (_event, cron) => {
-    if (!cron) return null;
-    unscheduleCron(cron.id);
-    const deleted = await deleteCron(cron.id);
-    return deleted;
-});
-
-// ---------------------------------------------------
-// Lógica del AutoUpdater
-// ---------------------------------------------------
-
-// Cuando comienza a buscar
-autoUpdater.on('checking-for-update', () => {
-    log.info('Buscando actualizaciones...');
-});
-
-// Cuando encuentra una actualización disponible
-autoUpdater.on('update-available', (info) => {
-    log.info('Actualización disponible:', info);
-    // Avisar al frontend
-    sendToRenderer('update-available', info);
-});
-
-// Progreso de descarga (opcional, por si quieres barra de carga)
-autoUpdater.on('download-progress', (progressObj) => {
-    sendToRenderer('download-progress', progressObj);
-});
-
-// Cuando la actualización se descargó completa
-autoUpdater.on('update-downloaded', (info) => {
-    log.info('Actualización descargada');
-    sendToRenderer('update-downloaded', info);
-});
-
-// Manejo de errores
-autoUpdater.on('error', (err) => {
-    log.error('Error en auto-updater:', err);
-    sendToRenderer('update-error', err);
-});
-
-// ---------------------------------------------------
-// Escuchar la orden del frontend para reiniciar
-// ---------------------------------------------------
-ipcMain.handle('restart-app', () => {
-    autoUpdater.quitAndInstall();
 });

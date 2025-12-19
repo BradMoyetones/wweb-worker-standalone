@@ -1,93 +1,67 @@
-# Release Notes – v2.0.0
+# Release Notes – v2.1.0
 
-Esta versión **2.0.0** representa una **reconstrucción completa del proyecto**, tanto a nivel técnico como conceptual. No es una simple iteración: es un cambio de paradigma.
-
-Lo que comenzó como un **bot de WhatsApp ejecutado desde consola**, basado en variables de entorno y lógica rígida, evoluciona ahora hacia una **aplicación de escritorio completa**, con interfaz gráfica, persistencia de datos, motor de workflows y ejecución programada avanzada.
+Esta actualización se centra en la **solidez estructural** y la **estabilidad**. Hemos reescrito el núcleo del proceso principal (Main Process) para garantizar que la aplicación sea más rápida, consuma menos recursos y sea mucho más fácil de actualizar en el futuro.
 
 ---
 
-## 📥 Descargas
+## 🎨 Nueva Experiencia de Usuario
 
-| OS | Descarga Directa (Latest) |
-|----|--------------------------|
-| 🐧 **ALL VERSIONS** | [Ver todas las versiones](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest) |
-| 🪟 **Windows** | [Descargar .exe](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-Setup-2.0.0.exe) |
-| 🍎 **Mac (Silicon)** | [Descargar arm64.dmg](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.0.0-arm64.dmg) |
-| 🍏 **Mac (Intel)** | [Descargar x64.dmg](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.0.0-x64.dmg) |
-| 🐧 **Linux** | [Descargar .AppImage](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.0.0.AppImage) |
+### 🔔 Notificaciones de Actualización Pro
 
----
+Hemos jubilado los avisos genéricos.
 
-### ✨ Novedad Estelar: Motor de Navegador Autónomo
-
-¡Adiós a los prerequisitos!
-
-* **Cero Dependencias:** La aplicación ya no requiere que el usuario tenga Google Chrome instalado.
-* **Auto-Aprovisionamiento:** El sistema detecta automáticamente tu sistema operativo (Windows, Linux, Mac Intel o Mac Silicon) y descarga una versión aislada y optimizada de Chromium en el primer inicio.
-* **UI de Progreso:** Se incluye una nueva interfaz de carga que notifica el estado de la descarga de dependencias.
+* **Update Center:** Nuevo componente visual dedicado para las actualizaciones (adiós a los toasts genéricos).
+* **Markdown Support:** Las notas de versión ahora lucen hermosas, con soporte completo para tablas, código resaltado y formato enriquecido.
+* **Transparencia total:** Mira el progreso real de la descarga directamente en la interfaz.
 
 ---
 
-### 🚨 Cambio de enfoque (Breaking Change)
+## 🏗️ Arquitectura Interna (The Big Refactor)
 
-En la versión **1.x**, el bot dependía de variables de entorno, ejecución manual y lógica acoplada.
+Hemos migrado de un modelo monolítico a una **Arquitectura basada en Controladores**. Esto significa que cada parte de la app ahora tiene un "cerebro" independiente:
 
-En **v2.0.0**, el proyecto se transforma en:
+* **WhatsAppController:** Rediseñado con una **Máquina de Estados**. El flujo desde la descarga de Chromium hasta el escaneo del QR es ahora mucho más robusto.
+* **CronExecutor & WorkflowEngine:** Se ha desacoplado la ejecución de la lógica de persistencia, permitiendo un manejo de errores mucho más fino.
+* **Event-Driven System:** Implementación de un `EventEmitter` personalizado que centraliza la comunicación entre el core y la interfaz.
 
-* Una **aplicación Electron multiplataforma**.
-* Con **UI en React + TypeScript**.
-* Persistencia con **SQLite + Drizzle ORM**.
-* Motor de **cron jobs dinámicos**.
-* Ejecutor de **workflows HTTP multi-step**.
-
----
-
-### 🖥️ Migración a Electron + UI gráfica
-
-El proyecto ahora se construye sobre **Electron** usando **electron-vite**.
-
-* **Frontend:** Desarrollado en **React con TypeScript** para validación robusta y estados sincronizados.
-* **Feedback Visual:** Actualización inmediata ante cambios internos (cron running, paused, error, etc.).
-* **Comunicación IPC:** Sincronía total entre el proceso de fondo (Node.js) y la interfaz visual.
-
----
-
-### 🗄️ Persistencia y Cron Jobs Dinámicos
-
-Se incorpora una base de datos local **SQLite** gestionada por **Drizzle ORM**.
-
-* **Adiós .env:** Toda la lógica crítica vive en la base de datos.
-* **Motor Cron:** Rediseñado con `node-cron`. Los trabajos se registran, pausan, reanudan y auditan en tiempo real.
-* **Watchdog Inteligente:** Nuevo sistema de monitoreo que reinicia automáticamente el cliente de WhatsApp si detecta bloqueos o desconexiones.
-
----
-
-### 🔁 Motor de Workflows (Core)
-
-Se introduce el concepto de **Workflows HTTP multi-step**. Cada cron ejecuta una secuencia declarativa:
-
-1. Requests HTTP encadenados (GET/POST).
-2. Manejo de Cookies y Headers dinámicos entre pasos.
-3. Extracción de datos inteligente.
-4. Envío del resultado final a grupos de WhatsApp con formato enriquecido.
-
----
-
-### 📥 Descarga e Instalación
-
-Selecciona el instalador adecuado para tu sistema:
-
-| Sistema Operativo | Archivo a descargar | Notas |
+| Módulo | Antes | Ahora |
 | --- | --- | --- |
-| **Windows** | `wweb-worker-standalone-Setup-2.0.0.exe` | Instalador automático. |
-| **macOS (M1/M2/M3)** | `wweb-worker-standalone-2.0.0-arm64.dmg` | Para Macs con Apple Silicon. |
-| **macOS (Intel)** | `wweb-worker-standalone-2.0.0-x64.dmg` | Para Macs antiguos con chip Intel. |
-| **Linux** | `wweb-worker-standalone-2.0.0.AppImage` | Ejecutable universal. |
-
-> **Nota para usuarios de Mac:** Si es la primera vez que instalas, asegúrate de arrastrar la app a la carpeta de Aplicaciones.
+| **Código** | Espagueti (Monolito) | Modular (Controladores) |
+| **WhatsApp** | Lógica rígida | Máquina de estados dinámica |
+| **Updates** | Toast genérico | Centro de actualizaciones dedicado |
+| **Mantenibilidad** | Difícil / Frágil | Alta / Escalable |
 
 ---
 
-### 🚀 Conclusión
+## 🛠️ Para Desarrolladores (Technical Preview)
 
-Se pasó de *“un bot que corre desde consola”* a *“una plataforma de automatización de escritorio”*. Esta versión sienta las bases para un futuro escalable con integraciones ilimitadas.
+Para los entusiastas del código, hemos organizado el directorio `src/main` bajo un patrón de diseño orientado a servicios y controladores. Esto permite una mantenibilidad superior y un testing mucho más sencillo.
+
+### Nueva Estructura de Directorios
+
+```text
+./src/main
+├── controllers  <-- Lógica de orquestación (WA, DB, Window, Updates)
+├── handlers     <-- Registro centralizado de IPCs
+├── index.ts     <-- Punto de entrada limpio (Bootstrap)
+├── models       <-- Definiciones de esquemas y acceso a datos
+└── services     <-- Motores de ejecución (Workflows, Cron, Browser)
+```
+
+**Cambios clave:**
+
+* **Inyección de Dependencias:** Los controladores ahora reciben sus dependencias por constructor.
+* **IPC Handlers:** Se eliminó la lógica de negocio de los archivos de comunicación.
+* **Global States:** Los snapshots de estado ahora viven dentro de sus respectivos controladores.
+
+---
+
+## 🚀 Conclusión
+
+Aunque visualmente la app mantiene su esencia, por dentro tiene un motor completamente nuevo. Esta base nos permite preparar funciones emocionantes que vendrán en las próximas versiones sin comprometer la estabilidad.
+
+---
+
+*Hecho con ❤️ para la comunidad de automatización.*
+
+---

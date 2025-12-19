@@ -14,10 +14,13 @@ import { ActiveThemeProvider } from './components/active-theme';
 import { VersionProvider } from './contexts/VersionContext';
 import { DataProvider, WhatsAppProvider } from './contexts';
 import { Toaster } from './components/ui/sonner';
-
+import { ThemeProvider as NextThemesProvider } from "next-themes"
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeProvider defaultTheme="dark" storageKey="theme">
+    <NextThemesProvider attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange>
       <VersionProvider>
         <WhatsAppProvider>
           <ActiveThemeProvider>
@@ -28,6 +31,6 @@ createRoot(document.getElementById('root')!).render(
         </WhatsAppProvider>
       </VersionProvider>
       <Toaster />
-    </ThemeProvider>
+    </NextThemesProvider>
   </StrictMode>
 )

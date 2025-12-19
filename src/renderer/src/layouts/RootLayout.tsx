@@ -12,6 +12,7 @@ import Theming from "./components/settings/Theming";
 import Me from "./components/settings/Me";
 import Versions from "@/components/Versions";
 import Footer from "@/components/footer";
+import { UpdateNotification } from "@/components/UpdateNotification";
 
 export default function RootLayout() {
     const [isOpen, setIsOpen] = useState(false)
@@ -68,6 +69,7 @@ export default function RootLayout() {
                     <div className="flex-1" />
                 </div>
             </SidebarContent>
+            <UpdateNotification />
         </Sidebar>
     )
 }
