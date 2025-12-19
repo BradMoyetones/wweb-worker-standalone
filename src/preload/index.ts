@@ -22,6 +22,7 @@ const api = {
   // ---------------------------------------------------
   getAppVersion: () => ipcRenderer.invoke("get-app-version"),
   getPlatform: () => ipcRenderer.invoke("get-platform"),
+  getReleaseNotes: (): Promise<string> => ipcRenderer.invoke("get-release-notes"),
 
   // ---------------------------------------------------
   // DATABASE DATA AND CRONES
@@ -107,6 +108,9 @@ const whatsappApi = {
   sendMessage: (chatId: string, content: string, replyToId?: string | null) => ipcRenderer.invoke('whatsapp-send-message', chatId, content, replyToId),
 
   resetSession: () => ipcRenderer.invoke("whatsapp-reset-session"),
+  logout: () => ipcRenderer.invoke('whatsapp-logout'),
+  exportSession: (): Promise<{success: boolean, message?: string}> => ipcRenderer.invoke('whatsapp-export-session'),
+  importSession: () => ipcRenderer.invoke('whatsapp-import-session'),
 };
 
 export type Api = typeof api

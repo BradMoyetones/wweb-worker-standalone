@@ -1,3 +1,5 @@
+import { DBCronWorkflowStep } from "@app/types/crone.types";
+
 export interface WorkflowContext {
     cookies: Record<string, string>;
     steps: Record<string, any>;
@@ -90,7 +92,7 @@ function applyExtractors(
     }
 }
 
-export async function runWorkflow(steps: any[]): Promise<WorkflowContext> {
+export async function runWorkflow(steps: DBCronWorkflowStep[]): Promise<WorkflowContext> {
     const ctx: WorkflowContext = {
         cookies: {},
         steps: {},
@@ -127,8 +129,12 @@ export async function runWorkflow(steps: any[]): Promise<WorkflowContext> {
             },
             ctx
         );
+        // const allowedStatus: number[] =
+        //     step.allowedStatus ?? [200, 201, 204];
 
-        if (!res.ok) {
+        const allowedStatus: number[] = [200, 201, 204, 302];
+
+        if (!allowedStatus.includes(res.status)) {
             throw new Error(`Step "${step.name}" failed with status ${res.status}`);
         }
     }

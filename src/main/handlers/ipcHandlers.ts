@@ -24,6 +24,10 @@ export function registerIpcHandlers(
 
     ipcMain.handle('get-platform', () => process.platform);
 
+    ipcMain.handle('get-release-notes', async () => {
+        return await updateController.getReleaseNotes();
+    });
+
     // WhatsApp handlers
     ipcMain.handle('whatsapp-init', async (event) => {
         try {
@@ -100,13 +104,33 @@ export function registerIpcHandlers(
         }
     );
 
-    ipcMain.handle('whatsapp-reset-session', async () => {
+    ipcMain.handle('whatsapp-reset-session', async (event) => {
         try {
-            await whatsappController.resetSession();
+            await whatsappController.resetSession(event.sender);
             return { success: true };
         } catch (err: any) {
             return { success: false, error: err.message };
         }
+    });
+
+    // WhatsApp Logout
+    ipcMain.handle('whatsapp-logout', async (event) => {
+        try {
+            await whatsappController.logout(event.sender);
+            return { success: true };
+        } catch (err: any) {
+            return { success: false, error: err.message };
+        }
+    });
+
+    // Exportar sesión (ZIP)
+    ipcMain.handle('whatsapp-export-session', async () => {
+        return await whatsappController.exportSession();
+    });
+
+    // Importar sesión (ZIP)
+    ipcMain.handle('whatsapp-import-session', async (event) => {
+        return await whatsappController.importSession(event.sender);
     });
 
     // Database handlers

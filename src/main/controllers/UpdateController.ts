@@ -1,7 +1,9 @@
 import { autoUpdater } from 'electron-updater';
 import { EventEmitter } from '../services/EventEmitter';
 import log from 'electron-log';
-import type { WebContents } from 'electron';
+import { app, type WebContents } from 'electron';
+import path from 'path';
+import fs from 'fs';
 
 log.transports.file.level = 'info';
 autoUpdater.logger = log;
@@ -67,5 +69,28 @@ export class UpdateController extends EventEmitter {
 
     quitAndInstall(): void {
         autoUpdater.quitAndInstall();
+    }
+
+    async getReleaseNotes(): Promise<string> {
+        try {
+            let notesPath: string;
+
+            if (app.isPackaged) {
+                // Ruta en producción (ajustada a tu estructura de asar.unpacked)
+                notesPath = path.join(process.resourcesPath, 'app.asar.unpacked', 'releases', 'notes', 'latest.md');
+            } else {
+                // Ruta en desarrollo (subiendo desde src/main/controllers a la raíz)
+                notesPath = path.join(app.getAppPath(), 'releases', 'notes', 'latest.md');
+            }
+
+            if (fs.existsSync(notesPath)) {
+                return fs.readFileSync(notesPath, 'utf-8');
+            }
+
+            return '# Sin notas disponibles\nNo se encontró el archivo de cambios para esta versión.';
+        } catch (error) {
+            console.error('Error leyendo release notes:', error);
+            return 'Error al cargar las notas de la versión.';
+        }
     }
 }

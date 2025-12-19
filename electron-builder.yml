@@ -17,6 +17,7 @@ asarUnpack:
   - out/renderer/img/**
   - out/renderer/index.html
   - drizzle/migrations/**
+  - releases/notes/latest.md
 win:
   icon: resources/icon.png
   executableName: WWEBWorker

@@ -4,6 +4,8 @@ import path from 'path';
 import fs from 'fs';
 import { getChromiumPath } from '../services/browserDownloader';
 import { EventEmitter } from '../services/EventEmitter';
+import AdmZip from 'adm-zip';
+import { dialog } from 'electron';
 
 export type WhatsAppStatus =
     | 'idle'
@@ -250,29 +252,153 @@ export class WhatsAppController extends EventEmitter {
         await this.client.sendMessage(chatId, message);
     }
 
-    async resetSession(): Promise<void> {
-        console.log('[WhatsApp] Resetting session...');
+    // Hace cierre de sesion
+    async resetSession(webContents: WebContents): Promise<void> {
+        console.log('[WhatsApp] Full reset initiated...');
 
+        // 1. Intentar Logout formal (si el cliente existe y está conectado)
         if (this.client) {
             try {
+                // Verificamos si realmente hay una sesión activa para cerrar
+                if (this.state.status === 'ready' || this.state.status === 'authenticated') {
+                    console.log('[WhatsApp] Attempting server-side logout...');
+                    await this.client.logout();
+                }
                 await this.client.destroy();
             } catch (err) {
-                console.error('[WhatsApp] Error destroying client:', err);
+                console.warn('[WhatsApp] Could not logout gracefully, forcing destroy...', err);
+                await this.client.destroy();
             }
             this.client = null;
         }
 
+        // 2. Limpieza absoluta de archivos
         try {
-            fs.rmSync(this.sessionPath, { recursive: true, force: true });
+            if (fs.existsSync(this.sessionPath)) {
+                // Borramos toda la carpeta de autenticación
+                fs.rmSync(this.sessionPath, { recursive: true, force: true });
+                console.log('[WhatsApp] Session files deleted.');
+            }
         } catch (err) {
-            console.error('[WhatsApp] Error removing session:', err);
+            console.error('[WhatsApp] Error deleting files:', err);
         }
 
-        this.state = {
+        // 3. Resetear el estado interno
+        this.updateState({
             status: 'idle',
+            user: undefined,
             chats: [],
             contacts: [],
-        };
+            qr: undefined,
+        });
+
+        // Notificamos al front que todo se limpió
+        this.emit('whatsapp-status', this.state, webContents);
         this.isInitializing = false;
+
+        // 4. Reiniciar el ciclo de vida (Esto mostrará el QR de nuevo automáticamente)
+        console.log('[WhatsApp] Restarting for new connection...');
+        await this.initialize(webContents);
+    }
+
+    /**
+     * Cierra la sesión actual y destruye el cliente sin borrar los archivos,
+     * permitiendo que el usuario vuelva a ver el QR.
+     */
+    async logout(webContents: WebContents): Promise<void> {
+        if (this.client) {
+            try {
+                await this.client.logout();
+                await this.client.destroy();
+            } catch (err) {
+                console.error('[WhatsApp] Logout error:', err);
+            }
+            this.client = null;
+        }
+        this.updateState({ status: 'idle', user: undefined, chats: [], qr: undefined });
+        this.isInitializing = false;
+        this.emit('whatsapp-status', this.state, webContents);
+    }
+
+    /**
+     * Comprime la carpeta de sesión actual en un ZIP y permite guardarla.
+     */
+    async exportSession(): Promise<{ success: boolean; message?: string }> {
+        const result = await dialog.showSaveDialog({
+            title: 'Exportar Sesión de WhatsApp',
+            defaultPath: path.join(app.getPath('downloads'), 'whatsapp-session.zip'),
+            filters: [{ name: 'Zip Files', extensions: ['zip'] }],
+        });
+
+        if (result.canceled || !result.filePath) return { success: false };
+
+        try {
+            // Es vital que el cliente esté cerrado o los archivos de LevelDB estarán bloqueados
+            if (this.client) await this.client.destroy();
+            this.client = null;
+
+            const zip = new AdmZip();
+            // wwebjs_auth contiene la carpeta 'session-wweb-worker' (el clientId)
+            if (fs.existsSync(this.sessionPath)) {
+                zip.addLocalFolder(this.sessionPath);
+                zip.writeZip(result.filePath);
+                return { success: true, message: 'Sesión exportada correctamente' };
+            } else {
+                return { success: false, message: 'No existe una sesión activa para exportar' };
+            }
+        } catch (err: any) {
+            return { success: false, message: err.message };
+        }
+    }
+
+    /**
+     * Importa un archivo ZIP y lo extrae en la carpeta de sesión.
+     */
+    async importSession(webContents: WebContents): Promise<{ success: boolean; message?: string }> {
+        const result = await dialog.showOpenDialog({
+            properties: ['openFile'],
+            filters: [{ name: 'Zip Files', extensions: ['zip'] }],
+        });
+
+        if (result.canceled || !result.filePaths[0]) return { success: false };
+
+        try {
+            if (this.client) {
+                // Intentamos cerrar la sesión en el servidor para que el usuario anterior
+                // vea en su móvil que la sesión se cerró.
+                try {
+                    // Solo si el cliente está 'ready' o 'authenticated' tiene sentido el logout
+                    if (this.state.status === 'ready' || this.state.status === 'authenticated') {
+                        await this.client.logout();
+                    }
+                    await this.client.destroy();
+                } catch (logoutErr) {
+                    console.warn('[WhatsApp] Logout failed or timed out, forcing destroy...', logoutErr);
+                    await this.client.destroy();
+                }
+                this.client = null;
+            }
+
+            // Limpiar carpeta actual (Borra rastros del usuario anterior)
+            if (fs.existsSync(this.sessionPath)) {
+                fs.rmSync(this.sessionPath, { recursive: true, force: true });
+            }
+
+            // Extraer ZIP (La nueva sesión)
+            const zip = new AdmZip(result.filePaths[0]);
+            zip.extractAllTo(this.sessionPath, true);
+
+            // Reiniciar el estado para que initialize no crea que sigue en la sesión vieja
+            this.updateState({ status: 'idle', user: undefined, chats: [], qr: undefined });
+            this.isInitializing = false;
+
+            // 4. Iniciar con los nuevos archivos
+            await this.initialize(webContents);
+
+            return { success: true, message: 'Sesión importada y anterior cerrada con éxito' };
+        } catch (err: any) {
+            console.error('[IPC] Error importing session:', err);
+            return { success: false, message: err.message };
+        }
     }
 }
