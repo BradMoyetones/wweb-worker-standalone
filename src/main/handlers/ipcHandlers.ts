@@ -138,7 +138,7 @@ export function registerIpcHandlers(
         return await databaseController.getAllCrones();
     });
 
-    ipcMain.handle('createCron', async (event, id, input) => {
+    ipcMain.handle('createCron', async (event, input) => {
         return await databaseController.createCron(input);
     });
 

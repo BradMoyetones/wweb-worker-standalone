@@ -26,7 +26,7 @@ export class WindowController {
 
         this.setupWindowEvents();
         this.loadContent();
-        this.hookLogs()
+        this.hookLogs();
 
         return this.mainWindow;
     }
@@ -52,13 +52,26 @@ export class WindowController {
         });
     }
 
+    // private loadContent(): void {
+    //     if (!this.mainWindow) return;
+
+    //     if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    //         this.mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
+    //     } else {
+    //         this.mainWindow.loadFile(join(process.resourcesPath, 'app.asar.unpacked', 'out', 'renderer', 'index.html'));
+    //     }
+    // }
+
     private loadContent(): void {
         if (!this.mainWindow) return;
 
         if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
             this.mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
         } else {
-            this.mainWindow.loadFile(join(process.resourcesPath, 'app.asar.unpacked', 'out', 'renderer', 'index.html'));
+            // SOLUCIÓN: Usar join(__dirname, ...)
+            // En producción, __dirname apunta a la carpeta 'out/main' dentro del ASAR
+            // Por lo tanto, subimos un nivel y entramos a 'renderer'
+            this.mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
         }
     }
 
@@ -120,5 +133,15 @@ export class WindowController {
         };
 
         // Haz lo mismo con console.warn si quieres
+        console.warn = (...args) => {
+            originalWarn(...args);
+            if (!this.mainWindow?.webContents.isDestroyed()) {
+                this.mainWindow?.webContents.send('app-log', {
+                    type: 'warn',
+                    message: args.join(' '),
+                    time: new Date().toLocaleTimeString(),
+                });
+            }
+        };
     }
 }

@@ -4,7 +4,8 @@ Esta actualización resuelve problemas críticos de ejecución en sistemas macOS
 
 ### 🛠 Correcciones Críticas (Hotfixes)
 
-* **Compatibilidad Universal en macOS:** Se ha corregido el error `incompatible architecture`. La aplicación ahora es un binario **Universal**, funcionando de forma nativa tanto en procesadores **Intel (x64)** como en **Apple Silicon (M1/M2/M3)**.
+* **Compatibilidad en macOS:** Se ha corregido el error `incompatible architecture`. La aplicación ahora ofrece soporte nativo tanto en procesadores **Intel (x64)** como en **Apple Silicon (M1/M2/M3)**.
+* **Optimización de Carga ASAR:** Se corrigió la ruta de carga del Renderer. Ahora el sistema lee el HTML directamente desde el paquete comprimido (`app.asar`), eliminando errores de "File not found" y mejorando la velocidad de apertura.
 * **Fix de Persistencia en Mac:** Se corrigió el error donde el cliente de WhatsApp se quedaba bloqueado en "Autenticando". Ahora la caché de la sesión se guarda correctamente en el directorio `userData`, evitando restricciones de solo lectura del sistema.
 * **Limpieza Automática de Navegador:** Implementamos un sistema de purga para versiones antiguas de Chromium. La app ahora detecta y elimina binarios obsoletos, ahorrando cientos de MB de espacio en disco.
 
@@ -19,13 +20,14 @@ Esta actualización resuelve problemas críticos de ejecución en sistemas macOS
 
 ### 📦 Mejoras Internas
 
-* Actualización de dependencias nativas para mejorar el rendimiento de la base de datos SQLite.
-* Optimización del ciclo de vida del cliente de WhatsApp para evitar cierres inesperados durante la inicialización.
+* **Native Rebuild:** Activamos la reconstrucción automática de dependencias nativas (`better-sqlite3`) durante el despliegue para garantizar compatibilidad total con cada arquitectura.
+* **Rendimiento de Base de Datos:** Actualización de dependencias nativas para mejorar el rendimiento de la base de datos SQLite.
+* **Ciclo de Vida:** Optimización del ciclo de vida del cliente de WhatsApp para evitar cierres inesperados durante la inicialización.
 
 ---
 
 ### 📥 ¿Cómo actualizar?
 
 1. Descarga el instalador correspondiente a tu sistema operativo abajo.
-2. Si estás en **macOS**, ahora solo necesitas un único archivo independientemente de tu procesador.
+2. Si estás en **macOS**, elige la versión según tu procesador (**arm64** para chips M1/M2/M3 o **x64** para Intel) para un rendimiento óptimo.
 3. Tus crones y sesiones actuales se mantendrán intactos tras la actualización.

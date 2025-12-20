@@ -11,12 +11,16 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
   # Excluir DB
   - '!out/renderer/store/**'
+  - '!database/**'
 asarUnpack:
-  - resources/**
-  - out/renderer/assets/**
-  - out/renderer/img/**
-  - out/renderer/index.html
-  - drizzle/migrations/**
+  # - resources/**
+  # - out/renderer/assets/**
+  # - out/renderer/img/**
+  # - out/renderer/index.html
+  # - drizzle/migrations/**
+  - "**/node_modules/better-sqlite3/**/*" # Solo SQLite necesita estar afuera
+  - "resources/**"
+  - "drizzle/migrations/**"
   - releases/notes/latest.md
 win:
   icon: resources/icon.png
@@ -63,7 +67,8 @@ linux:
   category: Utility
 appImage:
   artifactName: ${name}-${version}-${arch}.${ext} # ${arch}
-npmRebuild: false
+asar: true
+npmRebuild: true
 publish:
   provider: github
   owner: BradMoyetones
