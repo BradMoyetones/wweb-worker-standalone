@@ -18,6 +18,11 @@ WWEB Worker ha evolucionado de un simple script a una infraestructura completa d
 
 ---
 
+> [!IMPORTANT]
+> **WWEB Worker no es una herramienta oficial de WhatsApp/Meta. El uso de automatizaciones puede conllevar el riesgo de suspensión de la cuenta. Úselo con responsabilidad.**
+
+---
+
 ## 📥 Descargas (Latest Release)
 
 <div align="center">

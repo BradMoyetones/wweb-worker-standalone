@@ -23,22 +23,40 @@ asarUnpack:
   - "drizzle/migrations/**"
   - releases/notes/latest.md
 win:
-  icon: resources/icon.png
+  icon: resources/logos/logo-worker-1.png
   executableName: WWEBWorker
   target:
     - target: nsis
       arch:
         - x64
 nsis:
+  # --- CONFIGURACIÓN DEL ASISTENTE ---
+  oneClick: false                           # DESACTIVADO para permitir el asistente (pestañas)
+  allowToChangeInstallationDirectory: true  # Permite al usuario elegir la ruta (C:\Program Files, etc.)
+  license: build/license.txt                # Muestra la pestaña de Términos y Condiciones
+  multiUser: true                           # Permite elegir si instalar para "Solo yo" o "Todos los usuarios"
+  
+  # --- INTERFAZ POST-INSTALACIÓN ---
+  runAfterFinish: true                      # Muestra el checkbox "Ejecutar al finalizar"
+  createDesktopShortcut: false             # Crea acceso directo en escritorio
+  createStartMenuShortcut: true             # Crea acceso directo en el menú inicio
+  
+  # --- PERSONALIZACIÓN VISUAL ---
+  # Para que se vea profesional, usa archivos .bmp (dimensiones recomendadas abajo)
+  installerSidebar: resources/sidebar.bmp   # Imagen lateral (164 x 314 px)
+  installerHeader: resources/header.bmp     # Imagen de cabecera (150 x 57 px)
+  
+  # --- DATOS DEL ARCHIVO ---
   artifactName: ${name}-${version}-${arch}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
-  allowElevation: true
-  createDesktopShortcut: always
-  runAfterFinish: true
+  allowElevation: true                      # Pide permisos de admin si se instala en Program Files
+
+  # Incluimos el script de personalización
+  include: build/installer.nsh
 mac:
   category: public.app-category.productivity
-  icon: resources/icon.png
+  icon: resources/logos/logo-worker-1.png
   target: # Arquitecturas Intel y M
     - target: dmg
       arch: [x64, arm64]
@@ -54,10 +72,10 @@ mac:
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize: false
 dmg:
-  icon: resources/icon.png
+  icon: resources/logos/logo-worker-1.png
   artifactName: ${name}-${version}-${arch}.${ext}
 linux:
-  icon: resources/icon.png
+  icon: resources/logos/logo-worker-1.png
   target:
     - target: AppImage # El estándar para Linux (funciona en todo lado)
       arch: [x64] # Aseguramos x64

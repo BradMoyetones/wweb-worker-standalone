@@ -1,7 +1,7 @@
 import { BrowserWindow, shell } from 'electron';
 import { join } from 'path';
 import { is } from '@electron-toolkit/utils';
-import icon from '../../../resources/icon.png?asset';
+import icon from '../../../resources/logos/logo-worker-1.png?asset';
 
 export class WindowController {
     private mainWindow: BrowserWindow | null = null;
