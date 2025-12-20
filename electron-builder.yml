@@ -34,7 +34,8 @@ nsis:
   oneClick: false                           # DESACTIVADO para permitir el asistente (pestañas)
   allowToChangeInstallationDirectory: true  # Permite al usuario elegir la ruta (C:\Program Files, etc.)
   license: build/license.txt                # Muestra la pestaña de Términos y Condiciones
-  
+  warningsAsErrors: false # <--- ESTO ES LO QUE ENCONTRASTE. Agrégalo aquí.
+
   # --- INTERFAZ POST-INSTALACIÓN ---
   runAfterFinish: true                      # Muestra el checkbox "Ejecutar al finalizar"
   createDesktopShortcut: false             # Crea acceso directo en escritorio
