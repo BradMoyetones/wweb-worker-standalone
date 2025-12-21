@@ -35,16 +35,17 @@ nsis:
   allowToChangeInstallationDirectory: true  # Permite al usuario elegir la ruta (C:\Program Files, etc.)
   license: build/license.txt                # Muestra la pestaña de Términos y Condiciones
   warningsAsErrors: false # <--- ESTO ES LO QUE ENCONTRASTE. Agrégalo aquí.
+  displayLanguageSelector: true
 
   # --- INTERFAZ POST-INSTALACIÓN ---
   runAfterFinish: true                      # Muestra el checkbox "Ejecutar al finalizar"
-  createDesktopShortcut: false             # Crea acceso directo en escritorio
+  createDesktopShortcut: true             # Crea acceso directo en escritorio
   createStartMenuShortcut: true             # Crea acceso directo en el menú inicio
   
   # --- PERSONALIZACIÓN VISUAL ---
   # Para que se vea profesional, usa archivos .bmp (dimensiones recomendadas abajo)
-  installerSidebar: resources/sidebar.bmp   # Imagen lateral (164 x 314 px)
-  installerHeader: resources/header.bmp     # Imagen de cabecera (150 x 57 px)
+  installerSidebar: build/installerSidebar.bmp   # Imagen lateral (164 x 314 px)
+  installerHeader: build/installerHeader.bmp     # Imagen de cabecera (150 x 57 px)
   
   # --- DATOS DEL ARCHIVO ---
   artifactName: ${name}-${version}-${arch}-setup.${ext}
@@ -53,7 +54,7 @@ nsis:
   allowElevation: true                      # Pide permisos de admin si se instala en Program Files
 
   # Incluimos el script de personalización
-  include: build/installer.nsh
+  # include: build/installer.nsh
 mac:
   category: public.app-category.productivity
   icon: resources/logos/logo-worker-1.png
