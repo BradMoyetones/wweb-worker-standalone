@@ -408,8 +408,13 @@ export class WhatsAppController extends EventEmitter {
             this.updateState({ status: 'idle', user: undefined, chats: [], qr: undefined });
             this.isInitializing = false;
 
+            // Notificar al frontend el estado vacío inmediatamente
+            this.syncState(webContents);
+
             // 4. Iniciar con los nuevos archivos
-            await this.initialize(webContents);
+            setTimeout(async () => {
+                await this.initialize(webContents);
+            }, 1000);
 
             return { success: true, message: 'Sesión importada y anterior cerrada con éxito' };
         } catch (err: any) {

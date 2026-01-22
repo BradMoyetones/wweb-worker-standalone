@@ -106,42 +106,51 @@ export class WindowController {
     private hookLogs() {
         if (!this.mainWindow) return;
 
+        const formatArgs = (args: any[]) => {
+            return args
+                .map((arg) => {
+                    if (typeof arg === 'object' && arg !== null) {
+                        try {
+                            // El 2 añade indentación para que se vea bonito (opcional)
+                            return JSON.stringify(arg, null, 2);
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                        } catch (e) {
+                            return '[Unserializable Object]';
+                        }
+                    }
+                    return String(arg);
+                })
+                .join(' ');
+        };
+
         const originalLog = console.log;
         const originalError = console.error;
         const originalWarn = console.warn;
 
         console.log = (...args) => {
             originalLog(...args);
-            if (!this.mainWindow?.webContents.isDestroyed()) {
-                this.mainWindow?.webContents.send('app-log', {
-                    type: 'info',
-                    message: args.join(' '),
-                    time: new Date().toLocaleTimeString(),
-                });
-            }
+            this.sendMessageToRenderer('info', formatArgs(args));
         };
 
         console.error = (...args) => {
             originalError(...args);
-            if (!this.mainWindow?.webContents.isDestroyed()) {
-                this.mainWindow?.webContents.send('app-log', {
-                    type: 'error',
-                    message: args.join(' '),
-                    time: new Date().toLocaleTimeString(),
-                });
-            }
+            this.sendMessageToRenderer('error', formatArgs(args));
         };
 
-        // Haz lo mismo con console.warn si quieres
         console.warn = (...args) => {
             originalWarn(...args);
-            if (!this.mainWindow?.webContents.isDestroyed()) {
-                this.mainWindow?.webContents.send('app-log', {
-                    type: 'warn',
-                    message: args.join(' '),
-                    time: new Date().toLocaleTimeString(),
-                });
-            }
+            this.sendMessageToRenderer('warn', formatArgs(args));
         };
+    }
+
+    // Función auxiliar para limpiar el código
+    private sendMessageToRenderer(type: string, message: string) {
+        if (!this.mainWindow?.webContents.isDestroyed()) {
+            this.mainWindow?.webContents.send('app-log', {
+                type,
+                message,
+                time: new Date().toLocaleTimeString(),
+            });
+        }
     }
 }

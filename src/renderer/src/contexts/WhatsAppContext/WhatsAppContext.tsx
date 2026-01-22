@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import type React from 'react';
@@ -39,11 +40,11 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
                 <p className="text-lg flex">
                     En Android, toca <strong>&nbsp;Menú</strong>{' '}
                     <Badge variant={'secondary'} className="px-0.5 ml-2">
-                        <EllipsisVertical className="!size-4" />
+                        <EllipsisVertical className="size-4!" />
                     </Badge>
                     . En iPhone, toca <strong>&nbsp;Ajustes</strong>{' '}
                     <Badge variant={'secondary'} className="px-0.5 ml-2">
-                        <Settings className="!size-4" />
+                        <Settings className="size-4!" />
                     </Badge>
                     .
                 </p>
@@ -71,12 +72,12 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
             setStatus(data.status as WhatsAppStatus);
 
             if (data.status === 'error' || data.status === 'auth_failure') {
-                setErrorMessage(data.message || 'Error de autenticación');
+                setErrorMessage(data.error || 'Error de autenticación');
             }
 
             // Capturar el progreso de descarga
             if (data.status === 'downloading-browser') {
-                setDownloadProgress(data.progress || 0);
+                setDownloadProgress(data.downloadProgress || 0);
             }
 
             if (data.status === 'qr' && data.qr) {
@@ -124,6 +125,17 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
         window.whatsappApi.onContacts((contacts) => setContacts(contacts));
         window.whatsappApi.onMessage((msg) => handleNewMsg(msg));
     }, []);
+
+    useEffect(() => {
+        // Si el estado vuelve a ser 'idle' o 'initializing',
+        // reseteamos las variables visuales para mostrar la carga de nuevo
+        if (status === 'idle' || status === 'initializing' || status === 'downloading-browser') {
+            setFadeOut(false);
+            setShowOverlay(true);
+            setChats([]); // Limpiamos chats viejos
+            setUser(null); // Limpiamos usuario viejo
+        }
+    }, [status]);
 
     const handleRetry = () => {
         setErrorMessage('');

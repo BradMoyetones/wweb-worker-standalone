@@ -93,7 +93,7 @@ const whatsappApi = {
   init: () => ipcRenderer.invoke('whatsapp-init'),
   
   // Escucha cambios de estado: qr, ready, loading, auth_failure, disconnected
-  onStatus: (callback: (data: { status: string; qr?: string; error?: string; progress?: number; message?: string }) => void) => {
+  onStatus: (callback: (data: { status: string; qr?: string; error?: string; downloadProgress?: number; message?: string }) => void) => {
     ipcRenderer.on('whatsapp-status', (_, data) => callback(data));
   },
 

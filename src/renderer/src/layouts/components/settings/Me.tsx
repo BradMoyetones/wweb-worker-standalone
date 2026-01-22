@@ -63,18 +63,17 @@ export default function Me() {
                                 size={'sm'}
                                 onClick={async () => {
                                     const confirm = window.confirm(
-                                        'Esto cerrará la sesión actual en caso de haber y cargará una nueva. ¿Continuar?'
+                                        'Esto reemplazará la sesión actual y reiniciará la aplicación. ¿Continuar?'
                                     );
                                     if (!confirm) return;
 
+                                    const toastId = toast.loading('Importando sesión y reiniciando...');
                                     const data = await window.whatsappApi.importSession();
 
-                                    if (data.success && data.message) {
-                                        toast.success(data.message);
-                                    }
-
-                                    if (!data.success && data.message) {
-                                        toast.error(data.message);
+                                    if (data.success) {
+                                        toast.success(data.message, { id: toastId });
+                                    } else {
+                                        toast.error(data.message || 'Error al importar', { id: toastId });
                                     }
                                 }}
                             >
