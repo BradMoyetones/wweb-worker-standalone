@@ -180,9 +180,11 @@ export class DatabaseController extends EventEmitter {
                 const formData = mapCronToForm(item);
                 
                 if (formData) {
+                    const { id, ...dataWithoutId } = formData;
+
                     // Quitamos el estado activo por seguridad al importar (opcional)
                     const created = await this.createCron({
-                        ...formData,
+                        ...dataWithoutId,
                         isActive: false // Recomendado: que el usuario los active manualmente tras importar
                     });
                     newlyCreated.push(created);

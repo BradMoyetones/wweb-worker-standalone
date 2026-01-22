@@ -43,8 +43,11 @@ async function createCron(input: CreateCronFormData): Promise<CronWithSteps> {
       method: step.method,
       url: step.url,
       headers: step.headers ?? null,
+      bodyType: step.bodyType ?? 'json',
       body: step.body ?? null,
+      requestOptions: step.requestOptions ?? null,
       responseFormat: step.responseFormat,
+      extract: step.extract ?? null,
     }));
 
     await db.insert(cronWorkflowSteps).values(stepsToInsert);
@@ -109,8 +112,11 @@ async function updateCron(id: string, input: UpdateCronFormData): Promise<CronWi
       method: step.method,
       url: step.url,
       headers: step.headers ?? null,
+      bodyType: step.bodyType ?? 'json',
       body: step.body ?? null,
+      requestOptions: step.requestOptions ?? null,
       responseFormat: step.responseFormat,
+      extract: step.extract ?? null,
     }));
 
     await db.insert(cronWorkflowSteps).values(stepsToInsert);

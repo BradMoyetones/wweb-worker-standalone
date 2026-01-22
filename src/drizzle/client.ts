@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import * as schema from './schema';
 import { getMigrationsPath, getStorePath } from '../config/storage';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
+import { app } from 'electron';
 
 let currentDbPath = '';
 let db: Database.Database | null = null;
@@ -54,6 +55,9 @@ const openDatabase = async (): Promise<Database.Database> => {
 export const getDb = async () => {
     const storePath = await getStorePath();
     const dbPath = path.join(storePath, 'wweb_store.db');
+    console.log("[DB]", dbPath);
+    console.log("[STORE PROD]", path.join(app.getPath('userData'), 'database'));
+    
 
     // 🔥 Elimina primero si no existe la tabla de migraciones
     const rawTmp = new Database(dbPath); // sin drizzle todavía
