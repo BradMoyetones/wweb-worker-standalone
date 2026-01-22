@@ -38,7 +38,7 @@ jobs:
       # Construcción y Publicación
       - name: Build and Release
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }} # Toma el token que guardamos
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Toma el token que guardamos
         run: |
           npm run build
           
@@ -63,4 +63,4 @@ jobs:
           # Asegura que no borre los archivos que subieron Windows y Mac
           append_body: false 
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
