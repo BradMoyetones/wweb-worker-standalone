@@ -1,11 +1,20 @@
-## 🚀 v2.1.4 - Bug Fixes & Data Persistence
+## 🚀 v2.1.5 – Dependency Update & Stability Fix
 
-Esta versión corrige un problema crítico en la persistencia de datos de las automatizaciones al importar o actualizar tareas programadas.
+Esta versión simplifica la instalación y mejora la estabilidad general eliminando un parche temporal que ya no es necesario.
 
-### 🔧 Correcciones de Errores
-- **Persistencia de Steps:** Se corrigió un error en los modelos de base de datos (`createCron` y `updateCron`) donde los campos avanzados como `requestOptions`, `extract` y `bodyType` se omitían al guardar en SQLite.
-- **Integridad en Importación:** Ahora, al importar archivos JSON de automatizaciones, todas las configuraciones avanzadas de los pasos (headers, cookies, extracción de datos) se mantienen correctamente.
+### 🔧 Cambios
 
-### 🛠️ Detalles Técnicos
-- Se actualizaron las funciones del modelo para mapear explícitamente las columnas de `cronWorkflowSteps` en Drizzle ORM.
-- Mejora en el manejo de valores nulos para campos de configuración JSON.
+* **Eliminado parche de `whatsapp-web.js`:**
+  Se removió el uso de `patch-package` aplicado sobre la versión `1.34.4`, ya que la aplicación ahora utiliza `whatsapp-web.js@1.34.6`, donde el problema fue corregido oficialmente.
+* **Instalación más limpia:**
+  Ya no se requiere modificar archivos dentro de `node_modules` durante el `postinstall`.
+
+### 🐛 Corrección de Bug
+
+* **Autenticación bloqueada:**
+  La actualización de `whatsapp-web.js` corrige el bug donde la app quedaba atascada en estado *“Authenticating”* y nunca emitía el evento `ready`.
+
+### 🧹 Mantenimiento
+
+* Simplificación del flujo de instalación.
+* Menos dependencias parcheadas → menor riesgo en futuras actualizaciones.
