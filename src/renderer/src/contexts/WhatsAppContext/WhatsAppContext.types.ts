@@ -20,4 +20,9 @@ export interface WhatsAppContextType {
     contacts: Contact[];
     chatSelected: string;
     setChatSelected: React.Dispatch<React.SetStateAction<string>>;
+    downloadProgress: number;
+    errorMessage: string;
+    handleRetry: () => void;
+    showOverlay: boolean;
+    fadeOut: boolean;
 }

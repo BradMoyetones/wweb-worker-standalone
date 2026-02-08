@@ -1,12 +1,16 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { WhatsAppStatusModal } from '@/components/WhatsAppStatusModal';
 import { useWhatsApp } from '@/contexts';
 import { CirclePower, Download, LogOut, MessageCircle, Upload } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function Me() {
     const { user, chats, status } = useWhatsApp();
+    const [openModal, setOpenModal] = useState(false);
+    
     return (
         <div>
             <h1 className="text-2xl font-bold">Mi Cuenta</h1>
@@ -15,16 +19,37 @@ export default function Me() {
                     <CardContent>
                         <article className="flex gap-2 items-center">
                             <img
-                                src={user?.profilePic || ''}
+                                src={user?.profilePic || '/logo-worker-1.png'}
                                 alt={`Perfil de ${user?.pushname}`}
                                 className="size-20 rounded-full"
                             />
                             <div>
-                                <h1 className="text-2xl font-bold">{user?.pushname}</h1>
-                                <p className="opacity-70">+{user?.wid.user}</p>
+                                <h1 className="text-2xl font-bold">
+                                    {user?.pushname || (
+                                        <>
+                                            {status === 'qr' && 'Vincular WhatsApp'}
+                                            {status === 'downloading-browser' && 'Preparando Entorno'}
+                                            {(status === 'error' || status === 'auth_failure') && 'Error de Conexión'}
+                                            {status === 'initializing' && 'Iniciando Sesión'}
+                                        </>
+                                    )}
+                                </h1>
+                                <p className="opacity-70">+{user?.wid.user || 'No logueado'}</p>
                             </div>
                         </article>
                         <div className="mt-4 space-y-4">
+                            <Button
+                                variant={'outline'}
+                                className="font-medium uppercase text-xs cursor-pointer"
+                                onClick={() => setOpenModal(true)}
+                            >
+                                {status === 'qr' && 'Vincular WhatsApp'}
+                                {status === 'downloading-browser' && 'Preparando Entorno'}
+                                {(status === 'error' || status === 'auth_failure') && 'Error de Conexión'}
+                                {status === 'initializing' && 'Iniciando Sesión'}
+                            </Button>
+                            <WhatsAppStatusModal open={openModal} setOpen={setOpenModal} />
+                            
                             <div className="flex justify-between">
                                 <h1 className="flex items-center gap-2 [&>svg]:size-5 [&>svg]:text-muted-foreground">
                                     <MessageCircle /> Chats activos

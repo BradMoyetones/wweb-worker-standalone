@@ -5,11 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Download, X, FileText } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import type { UpdateInfo, ProgressInfo } from 'electron-updater';
-import MarkdownPreview from '@uiw/react-markdown-preview';
-import { useTheme } from 'next-themes';
+import ReleaseNotesModal from './ReleaseNotesModal';
 
 export function UpdateNotification() {
     const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
@@ -17,7 +14,6 @@ export function UpdateNotification() {
     const [isDownloaded, setIsDownloaded] = useState(false);
     const [showReleaseNotes, setShowReleaseNotes] = useState(false);
     const [dismissed, setDismissed] = useState(false);
-    const { theme } = useTheme();
 
     useEffect(() => {
         window.api.onUpdateAvailable((info) => {
@@ -128,41 +124,7 @@ export function UpdateNotification() {
                 </Card>
             </div>
 
-            <Dialog open={showReleaseNotes} onOpenChange={setShowReleaseNotes}>
-                <DialogContent className="max-w-4xl! max-h-[90vh] h-full w-full!">
-                    <DialogHeader>
-                        <DialogTitle>Release Notes - v{updateInfo.version}</DialogTitle>
-                        <DialogDescription>See what&apos;s new in this update</DialogDescription>
-                    </DialogHeader>
-                    {/* LA CLAVE: 
-                      1. 'markdown-body' activa los estilos de GitHub.
-                      2. Forzamos el modo dark/light de GitHub basado en tu tema.
-                    */}
-                    <ScrollArea
-                        className={`
-                            flex-1 
-                            markdown-body 
-                            bg-muted/30!
-                        `}
-                        style={{
-                            backgroundColor: 'transparent', // Para que use el fondo de tu Dialog
-                            minHeight: '100%',
-                        }}
-                    >
-                        <MarkdownPreview
-                            source={updateInfo.releaseNotes as string}
-                            wrapperElement={{
-                                'data-color-mode': theme === 'dark' ? 'dark' : 'light',
-                            }}
-                            style={{
-                                padding: '24px',
-                                backgroundColor: 'transparent',
-                            }}
-                        />
-                        <ScrollBar orientation="vertical" />
-                    </ScrollArea>
-                </DialogContent>
-            </Dialog>
+            <ReleaseNotesModal notes={updateInfo?.releaseNotes as string || ""} open={showReleaseNotes} setOpen={setShowReleaseNotes} version={updateInfo?.version || ""} />
         </>
     );
 }

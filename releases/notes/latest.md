@@ -1,20 +1,22 @@
-## 🚀 v2.1.5 – Dependency Update & Stability Fix
+## 🚀 v2.1.6 – WhatsApp UI Refactor & Centralized Release Notes
 
-Esta versión simplifica la instalación y mejora la estabilidad general eliminando un parche temporal que ya no es necesario.
+Esta versión mejora la experiencia de usuario al gestionar la conexión de WhatsApp y estandariza la comunicación de actualizaciones mediante un sistema de notas centralizado.
 
 ### 🔧 Cambios
 
-* **Eliminado parche de `whatsapp-web.js`:**
-  Se removió el uso de `patch-package` aplicado sobre la versión `1.34.4`, ya que la aplicación ahora utiliza `whatsapp-web.js@1.34.6`, donde el problema fue corregido oficialmente.
-* **Instalación más limpia:**
-  Ya no se requiere modificar archivos dentro de `node_modules` durante el `postinstall`.
+* **WhatsApp Status Modal:**
+Se migró toda la lógica visual de conexión (QR, progreso de descarga y errores) a un componente `Dialog` de Shadcn, eliminando el bloqueo total de la interfaz.
+* **Sistema de Release Notes Centralizado:**
+Se implementó el nuevo componente `ReleaseNotesModal`. Ahora las novedades de la app se renderizan dinámicamente desde Markdown, soportando temas (dark/light) automáticamente y eliminando el contenido hardcodeado en múltiples vistas.
 
-### 🐛 Corrección de Bug
+### 🎨 Mejoras de UX/UI
 
-* **Autenticación bloqueada:**
-  La actualización de `whatsapp-web.js` corrige el bug donde la app quedaba atascada en estado *“Authenticating”* y nunca emitía el evento `ready`.
+* **Integración de Markdown:** Uso de `@uiw/react-markdown-preview` con estilos nativos de GitHub para una lectura clara de los cambios.
+* **Interfaz No Bloqueante:** El usuario ya no queda atrapado en una pantalla de carga; el estado de WhatsApp ahora vive en un diálogo elegante que permite mayor libertad visual.
 
 ### 🧹 Mantenimiento
 
-* Simplificación del flujo de instalación.
-* Menos dependencias parcheadas → menor riesgo en futuras actualizaciones.
+* **Código más limpio:**
+Reducción drástica de JSX en el `WhatsAppProvider`.
+* **Sincronización de Temas:**
+El modal de notas ahora detecta y aplica automáticamente el modo oscuro o claro del sistema.
