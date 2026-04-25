@@ -31,7 +31,7 @@ export function registerIpcHandlers(
     // WhatsApp handlers
     ipcMain.handle('whatsapp-init', async (event) => {
         try {
-            await whatsappController.initialize(event.sender);
+            // await whatsappController.initialize(event.sender);
             return { success: true };
         } catch (err: any) {
             return { success: false, error: err.message };

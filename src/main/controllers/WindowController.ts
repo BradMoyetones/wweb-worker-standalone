@@ -14,6 +14,12 @@ export class WindowController {
             minHeight: 600,
             show: false,
             autoHideMenuBar: true,
+
+            frame: false,
+            transparent: true,
+            vibrancy: 'sidebar',
+            visualEffectState: 'active', // Mantiene el blur aunque la ventana no esté enfocada
+            titleBarStyle: 'hiddenInset',
             ...(process.platform === 'linux' ? { icon } : {}),
             webPreferences: {
                 preload: join(__dirname, '../preload/index.js'),
