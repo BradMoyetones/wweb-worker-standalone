@@ -10,3 +10,5 @@ out
 
 src/renderer/public/store
 database
+
+.vscode

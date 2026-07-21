@@ -45,8 +45,8 @@ export class WhatsAppController extends EventEmitter {
         this.sessionPath = path.join(userDataPath, 'wwebjs_auth');
 
         // Definimos la ruta de la caché dentro de userData
-        this.cachePath = path.join(userDataPath, '.wwebjs_cache'); 
-        
+        this.cachePath = path.join(userDataPath, '.wwebjs_cache');
+
         // Crear la carpeta si no existe
         if (!fs.existsSync(this.cachePath)) {
             fs.mkdirSync(this.cachePath, { recursive: true });
@@ -96,11 +96,11 @@ export class WhatsAppController extends EventEmitter {
         this.updateState({ status: 'initializing' });
         this.emit('whatsapp-status', this.state, webContents);
 
-        const execPath = await getChromiumPath(() => {});
+        const execPath = await getChromiumPath(() => { });
 
         console.log("[WhatsApp] Session path:", this.sessionPath);
         console.log("[WhatsApp] Cache path:", this.cachePath);
-        
+
         this.client = new Client({
             authStrategy: new LocalAuth({
                 clientId: 'wweb-worker',
@@ -153,8 +153,41 @@ export class WhatsAppController extends EventEmitter {
 
         this.client.on('chat_archived', async () => {
             if (!this.client) return;
-            this.state.chats = await this.client.getChats();
-            this.emit('whatsapp-chats', this.state.chats, webContents);
+            try {
+                this.state.chats = await this.client.getChats();
+                this.emit('whatsapp-chats', this.state.chats, webContents);
+            } catch (err) {
+                console.log('[WhatsApp] Could not get chats');
+            }
+        });
+
+        this.client.on('contact_changed', async () => {
+            if (!this.client) return;
+            try {
+                const rawContacts = await this.client.getContacts();
+                const seenIds = new Set();
+
+                this.state.contacts = rawContacts.filter((contact) => {
+                    const id = contact.id._serialized;
+
+                    if (seenIds.has(id)) return false;
+
+                    if (contact.isGroup) {
+                        seenIds.add(id);
+                        return true;
+                    }
+
+                    if (contact.isUser && contact.isMyContact) {
+                        seenIds.add(id);
+                        return true;
+                    }
+
+                    return false;
+                });
+                this.emit('whatsapp-contacts', this.state.contacts, webContents);
+            } catch (err) {
+                console.log('[WhatsApp] Could not get contacts');
+            }
         });
 
         this.client.on('auth_failure', (msg) => {
@@ -184,14 +217,26 @@ export class WhatsAppController extends EventEmitter {
         }
 
         const user = { ...userInfo, profilePic };
-        const chats = await this.client.getChats();
-        // const contacts = await this.client.getContacts();
+        let chats: Chat[] = [];
+        let contacts: Contact[] = [];
+
+        try {
+            chats = await this.client.getChats();
+        } catch (err) {
+            console.log('[WhatsApp] Could not get chats');
+        }
+
+        try {
+            contacts = await this.client.getContacts();
+        } catch (err) {
+            console.log('[WhatsApp] Could not get contacts');
+        }
 
         this.updateState({
             status: 'ready',
             user,
             chats,
-            // contacts,
+            contacts,
         });
 
         this.emit('whatsapp-user', user, webContents);

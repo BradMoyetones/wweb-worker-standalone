@@ -64,7 +64,7 @@ export function WhatsAppStatusModal({ open, setOpen }: WhatsAppStatusModalProps)
 
     return (
         <Dialog defaultOpen={isOpen} open={open} onOpenChange={setOpen}>
-            <DialogContent className="sm:max-w-[1000px]! w-full! overflow-hidden">
+            <DialogContent className="sm:max-w-250! w-full! overflow-hidden">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-2xl">
                         {status === 'qr' && 'Vincular WhatsApp'}
@@ -116,7 +116,7 @@ export function WhatsAppStatusModal({ open, setOpen }: WhatsAppStatusModalProps)
                                                 </div>
                                             </div>
                                             <div className="flex justify-center md:justify-end">
-                                                <div className="aspect-square h-[284px] flex items-center justify-center bg-muted rounded-xl overflow-hidden my-auto">
+                                                <div className="aspect-square h-71 flex items-center justify-center bg-muted rounded-xl overflow-hidden my-auto">
                                                     {status === 'initializing' ? (
                                                         <Loader className="animate-spin size-8" />
                                                     ) : (

@@ -50,7 +50,7 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
 
     const [isFocused, setIsFocused] = useState(false);
     const searchBarRef = useRef<HTMLDivElement>(null); // Ref para el div que encierra el input de busqueda
-    const { chats } = useWhatsApp();
+    const { contacts } = useWhatsApp();
 
     const form = useForm<UpdateCronFormData>({
         resolver: zodResolver(updateCronSchema),
@@ -192,8 +192,8 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
                                         control={form.control}
                                         name="groupName"
                                         render={({ field }) => {
-                                            const filteredChats = chats.filter((chat) =>
-                                                chat.name.toLowerCase().includes((field.value ?? '').toLowerCase())
+                                            const filteredContacts = contacts.filter((contact) =>
+                                                contact.name?.toLowerCase().includes((field.value ?? '').toLowerCase())
                                             );
 
                                             return (
@@ -207,30 +207,30 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
                                                                 {...field}
                                                             />
                                                             {isFocused && (
-                                                                <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-lg overflow-y-auto z-50 max-h-96">
+                                                                <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-lg overflow-y-auto z-9999 max-h-96">
                                                                     <div className="py-2">
-                                                                        {filteredChats.length === 0 ? (
+                                                                        {filteredContacts.length === 0 ? (
                                                                             <p className="px-4 py-2 text-sm text-muted-foreground flex items-center gap-3">
                                                                                 <MessageCircleOff className="w-4 h-4 text-muted-foreground shrink-0" />
                                                                                 No se encontraron grupos
                                                                             </p>
                                                                         ) : (
-                                                                            filteredChats.map((chat) => (
+                                                                            filteredContacts.map((contact) => (
                                                                                 <div
-                                                                                    key={chat.id._serialized}
+                                                                                    key={contact.id._serialized}
                                                                                     className="group relative hover:bg-accent hover:text-accent-foreground"
                                                                                 >
                                                                                     <button
                                                                                         type="button"
                                                                                         onClick={() => {
-                                                                                            field.onChange(chat.name);
+                                                                                            field.onChange(contact.name);
                                                                                             setIsFocused(false);
                                                                                         }}
                                                                                         className="w-full px-4 py-2 text-left text-sm text-foreground cursor-pointer flex items-center justify-between group transition-colors"
                                                                                     >
                                                                                         <span className="flex items-center gap-3 line-clamp-1 truncate">
                                                                                             <MessageCircle className="w-4 h-4 text-muted-foreground shrink-0" />
-                                                                                            {chat.name}
+                                                                                            {contact.name}
                                                                                         </span>
                                                                                     </button>
                                                                                 </div>
