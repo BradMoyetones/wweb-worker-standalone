@@ -1,4 +1,4 @@
-# 🤖 WWEB Worker Standalone v2.1.6
+# 🤖 WWEB Worker Standalone v2.1.7
 
 <p align="center">
   <strong>Transforma tu WhatsApp en un motor de automatización profesional.</strong><br>
@@ -27,10 +27,10 @@ WWEB Worker ha evolucionado de un simple script a una infraestructura completa d
 
 <div align="center">
 
-[![Windows](https://img.shields.io/badge/Windows_x64_(Intel/AMD)-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.1.6-x64-setup.exe)
-[![macOS Silicon](https://img.shields.io/badge/MacOS_Apple_Silicon_(M1/M2/M3)-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.1.6-arm64.dmg)
-[![macOS Intel](https://img.shields.io/badge/MacOS_Intel-555555?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.1.6-x64.dmg)
-[![Linux](https://img.shields.io/badge/Linux_Universal_(AppImage)-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.1.6-x86_64.AppImage)
+[![Windows](https://img.shields.io/badge/Windows_x64_(Intel/AMD)-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.1.7-x64-setup.exe)
+[![macOS Silicon](https://img.shields.io/badge/MacOS_Apple_Silicon_(M1/M2/M3)-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.1.7-arm64.dmg)
+[![macOS Intel](https://img.shields.io/badge/MacOS_Intel-555555?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.1.7-x64.dmg)
+[![Linux](https://img.shields.io/badge/Linux_Universal_(AppImage)-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://github.com/BradMoyetones/wweb-worker-standalone/releases/latest/download/wweb-worker-standalone-2.1.7-x86_64.AppImage)
 
 </div>
 
