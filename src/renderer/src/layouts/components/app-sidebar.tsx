@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { CreateCronModal } from "@/pages/(root)/components/create-cron-modal";
 import { CronWithSteps } from "@app/types/crone.types";
 import { mapCronToForm } from "@app/utils/helpers";
-import { Download, GitBranch, Pause, Play, Plus, Trash2, Upload, X } from "lucide-react";
+import { Download, GitBranch, Home, Pause, Play, Plus, Settings, Trash2, Upload, X } from "lucide-react";
 import { AnimatePresence, motion, Variants } from "motion/react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -34,6 +34,7 @@ export default function AppSidebar() {
     const { status } = useWhatsApp();
     const [openModal, setOpenModal] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+    const navigate = useNavigate()
 
     const handleImport = async () => {
         toast.promise(window.api.importCrons(), {
@@ -77,7 +78,25 @@ export default function AppSidebar() {
         <Sidebar variant="inset">
             <SidebarHeader>
                 <div className="flex flex-col gap-2">
-                    <h1 className="text-2xl font-bold flex items-center gap-2">WWEBWorker</h1>
+                    <div className="flex items-center justify-between gap-2">
+                        <h1 className="text-2xl font-bold flex items-center gap-2">WWEBWorker</h1>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant={"ghost"}
+                                size={"icon"}
+                                onClick={() => navigate('/', { viewTransition: true })}
+                            >
+                                <Home />
+                            </Button>
+                            <Button
+                                variant={"ghost"}
+                                size={"icon"}
+                                onClick={() => navigate('/settings', { viewTransition: true })}
+                            >
+                                <Settings />
+                            </Button>
+                        </div>
+                    </div>
                     <Badge variant={"secondary"} onClick={() => setOpenModal(true)} className="cursor-pointer uppercase">{status}</Badge>
                     <div className="text-muted-foreground text-sm">
                         {activeCount} de {totalCount} crons activos
@@ -240,7 +259,7 @@ function CronCard({
         <motion.div
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
-            onClick={() => isSelectionMode ? onToggleSelect() : navigate(`/detail/${cron.id}`, {viewTransition: true})}
+            onClick={() => isSelectionMode ? onToggleSelect() : navigate(`/detail/${cron.id}`, { viewTransition: true })}
             className="cursor-pointer group"
         >
             <Card className={cn("transition-colors p-0", {

@@ -24,7 +24,7 @@ export default function RootLayout() {
             } as React.CSSProperties}
         >
             <AppSidebar />
-            <main className='flex-1 @container p-4 bg-card rounded-lg m-2'>
+            <main className='flex-1 @container p-4 bg-card rounded-lg m-2 border'>
                 <Suspense
                     fallback={
                         <div className="flex items-center justify-center fixed inset-0">

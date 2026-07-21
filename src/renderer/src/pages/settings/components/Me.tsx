@@ -8,31 +8,24 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function Me() {
-    const { user, chats, status } = useWhatsApp();
+    const { user, contacts, status } = useWhatsApp();
     const [openModal, setOpenModal] = useState(false);
     
     return (
         <div>
             <h1 className="text-2xl font-bold">Mi Cuenta</h1>
-            <div className="mt-4 border-l pl-4">
+            <div className="mt-4">
                 <Card>
                     <CardContent>
                         <article className="flex gap-2 items-center">
                             <img
                                 src={user?.profilePic || '/logo-worker-1.png'}
                                 alt={`Perfil de ${user?.pushname}`}
-                                className="size-20 rounded-full"
+                                className="size-20 rounded-full border bg-cover bg-center bg-no-repeat"
                             />
                             <div>
                                 <h1 className="text-2xl font-bold">
-                                    {user?.pushname || (
-                                        <>
-                                            {status === 'qr' && 'Vincular WhatsApp'}
-                                            {status === 'downloading-browser' && 'Preparando Entorno'}
-                                            {(status === 'error' || status === 'auth_failure') && 'Error de Conexión'}
-                                            {status === 'initializing' && 'Iniciando Sesión'}
-                                        </>
-                                    )}
+                                    {user?.pushname || "No Name"}
                                 </h1>
                                 <p className="opacity-70">+{user?.wid.user || 'No logueado'}</p>
                             </div>
@@ -43,10 +36,7 @@ export default function Me() {
                                 className="font-medium uppercase text-xs cursor-pointer"
                                 onClick={() => setOpenModal(true)}
                             >
-                                {status === 'qr' && 'Vincular WhatsApp'}
-                                {status === 'downloading-browser' && 'Preparando Entorno'}
-                                {(status === 'error' || status === 'auth_failure') && 'Error de Conexión'}
-                                {status === 'initializing' && 'Iniciando Sesión'}
+                                {status}
                             </Button>
                             <WhatsAppStatusModal open={openModal} setOpen={setOpenModal} />
                             
@@ -54,7 +44,7 @@ export default function Me() {
                                 <h1 className="flex items-center gap-2 [&>svg]:size-5 [&>svg]:text-muted-foreground">
                                     <MessageCircle /> Chats activos
                                 </h1>{' '}
-                                <Badge>{chats.length}</Badge>
+                                <Badge>{contacts.length}</Badge>
                             </div>
 
                             <div className="flex justify-between">

@@ -19,7 +19,7 @@ export function ThemeSelector({ ...props }: React.ComponentProps<typeof Button>)
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger>
         <Button 
           variant={"ghost"} 
           size={"icon"}
