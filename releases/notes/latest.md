@@ -1,22 +1,10 @@
-## 🚀 v2.1.6 – WhatsApp UI Refactor & Centralized Release Notes
+## 🚀 v2.1.7 – Actualización de dependencias y solucion de errores al obtener chats
 
-Esta versión mejora la experiencia de usuario al gestionar la conexión de WhatsApp y estandariza la comunicación de actualizaciones mediante un sistema de notas centralizado.
+Esta versión introduce actualización de deps y soluciona un error que impedía la obtención de chats en WhatsApp, por ende la UI se quedaba en bucle infinito y terminaba arrojando error.
 
 ### 🔧 Cambios
 
-* **WhatsApp Status Modal:**
-Se migró toda la lógica visual de conexión (QR, progreso de descarga y errores) a un componente `Dialog` de Shadcn, eliminando el bloqueo total de la interfaz.
-* **Sistema de Release Notes Centralizado:**
-Se implementó el nuevo componente `ReleaseNotesModal`. Ahora las novedades de la app se renderizan dinámicamente desde Markdown, soportando temas (dark/light) automáticamente y eliminando el contenido hardcodeado en múltiples vistas.
+* **Actualización de dependencias:** Se actualizaron todas las dependencias del proyecto a sus últimas versiones.
+* **Solución de errores:** Se corrigió un error que impedía la obtención de chats en WhatsApp, lo que provocaba que la UI se quedara en bucle infinito y terminara arrojando error.
+* **Mejoras en la descarga del Browser:** Se implementó un sistema de caché para evitar la descarga innecesaria del browser si ya hay uno en funcionamiento.
 
-### 🎨 Mejoras de UX/UI
-
-* **Integración de Markdown:** Uso de `@uiw/react-markdown-preview` con estilos nativos de GitHub para una lectura clara de los cambios.
-* **Interfaz No Bloqueante:** El usuario ya no queda atrapado en una pantalla de carga; el estado de WhatsApp ahora vive en un diálogo elegante que permite mayor libertad visual.
-
-### 🧹 Mantenimiento
-
-* **Código más limpio:**
-Reducción drástica de JSX en el `WhatsAppProvider`.
-* **Sincronización de Temas:**
-El modal de notas ahora detecta y aplica automáticamente el modo oscuro o claro del sistema.

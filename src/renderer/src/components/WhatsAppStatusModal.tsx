@@ -1,10 +1,10 @@
 'use client';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader, EllipsisVertical, Settings, AlertCircle } from 'lucide-react';
+import { Loader, EllipsisVertical, Settings, AlertCircle, CheckCircle } from 'lucide-react';
 import { Timeline } from '@/components/timeline';
 import { WhatsAppContext } from '@/contexts';
 import { Card, CardContent } from './ui/card';
@@ -64,7 +64,7 @@ export function WhatsAppStatusModal({ open, setOpen }: WhatsAppStatusModalProps)
 
     return (
         <Dialog defaultOpen={isOpen} open={open} onOpenChange={setOpen}>
-            <DialogContent className="sm:max-w-250! w-full! overflow-hidden">
+            <DialogContent>
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-2xl">
                         {status === 'qr' && 'Vincular WhatsApp'}
@@ -78,9 +78,36 @@ export function WhatsAppStatusModal({ open, setOpen }: WhatsAppStatusModalProps)
                 </DialogHeader>
 
                 <div className="py-4">
+                    {status === 'ready' && (
+                        <div className="z-50 flex items-center justify-center">
+                            <Card className="max-w-md w-full mx-4">
+                                <CardContent className="pt-6">
+                                    <div className="flex flex-col items-center gap-4 text-center">
+                                        <div className="p-3 bg-primary/10 rounded-full">
+                                            <CheckCircle className="text-primary size-8" />
+                                        </div>
+                                        <div className="space-y-2 w-full">
+                                            <h1 className="text-2xl font-bold">WhatsApp Listo</h1>
+                                            <p className="text-muted-foreground">
+                                                Ahora puedes crear flujos que utilicen WhatsApp.
+                                            </p>
+                                            <div className="flex items-center justify-center gap-2 mt-4">
+                                                <DialogTrigger className={"w-full"}>
+                                                    <Button variant="outline" onClick={() => setOpen?.(false)} className="w-full">
+                                                        Cerrar
+                                                    </Button>
+                                                </DialogTrigger>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
+
                     {/* ESTADO: DESCARGA DE NAVEGADOR */}
                     {status === 'downloading-browser' && (
-                        <div className="bg-background z-50 wavy-lines flex items-center justify-center">
+                        <div className="z-50 flex items-center justify-center">
                             <Card className="max-w-md w-full mx-4">
                                 <CardContent className="pt-6">
                                     <div className="flex flex-col items-center gap-4 text-center">
@@ -104,7 +131,7 @@ export function WhatsAppStatusModal({ open, setOpen }: WhatsAppStatusModalProps)
                     )}
 
                     {(status === 'initializing' || status === 'qr') && (
-                        <div className="bg-background z-50 wavy-lines">
+                        <div className="z-50">
                             <div className="flex items-center justify-center h-full">
                                 <Card className="max-w-4xl w-full mx-4">
                                     <CardContent className="pt-6">
@@ -136,7 +163,7 @@ export function WhatsAppStatusModal({ open, setOpen }: WhatsAppStatusModalProps)
                     )}
 
                     {(status === 'auth_failure' || status === 'error' || status === 'disconnected') && (
-                        <div className="bg-background z-50 wavy-lines flex items-center justify-center">
+                        <div className="z-50 flex items-center justify-center">
                             <Card className="max-w-md w-full mx-4">
                                 <CardContent className="pt-6">
                                     <div className="flex flex-col items-center gap-4 text-center">
@@ -161,10 +188,10 @@ export function WhatsAppStatusModal({ open, setOpen }: WhatsAppStatusModalProps)
                         </div>
                     )}
 
-                    {showOverlay && (status === 'idle' || status === 'authenticated' || status === 'ready') && (
+                    {showOverlay && (status === 'idle' || status === 'authenticated') && (
                         <div
                             className={cn(
-                                'bg-background z-50 flex items-center justify-center transition-opacity duration-500 wavy-lines',
+                                'z-50 flex items-center justify-center transition-opacity duration-500',
                                 fadeOut ? 'opacity-0' : 'opacity-100'
                             )}
                         >
@@ -178,7 +205,6 @@ export function WhatsAppStatusModal({ open, setOpen }: WhatsAppStatusModalProps)
                                             <h1 className="text-2xl font-bold">
                                                 {status === 'idle' && 'Iniciando WhatsApp...'}
                                                 {status === 'authenticated' && 'Autenticado correctamente'}
-                                                {status === 'ready' && 'Cargando chats'}
                                             </h1>
                                             <Progress
                                                 value={status === 'idle' ? 20 : status === 'authenticated' ? 60 : 100}

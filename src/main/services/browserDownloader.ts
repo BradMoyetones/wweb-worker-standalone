@@ -1,4 +1,4 @@
-import { install, Browser, resolveBuildId, BrowserPlatform } from '@puppeteer/browsers';
+import { install, Browser, resolveBuildId, BrowserPlatform, getInstalledBrowsers } from '@puppeteer/browsers';
 import { app } from 'electron';
 import path from 'path';
 import fs from 'fs';
@@ -16,6 +16,20 @@ export const getChromiumPath = async (onProgress: (percent: number) => void) => 
     } else {
         platform = BrowserPlatform.LINUX;
     }
+
+    // --- NUEVO: Verificar si ya hay alguna versión instalada ---
+    try {
+        const installedBrowsers = await getInstalledBrowsers({ cacheDir: downloadPath });
+        const existingChromium = installedBrowsers.find(b => b.browser === Browser.CHROMIUM && b.platform === platform);
+        
+        if (existingChromium && fs.existsSync(existingChromium.executablePath)) {
+            console.log('[BROWSER] Navegador ya instalado encontrado, omitiendo descarga:', existingChromium.executablePath);
+            return existingChromium.executablePath;
+        }
+    } catch (err) {
+        console.warn('[BROWSER] No se pudo verificar la caché de navegadores:', err);
+    }
+    // -----------------------------------------------------------
 
     // 2. Resolver Build ID más reciente
     const buildId = await resolveBuildId(Browser.CHROMIUM, platform, 'latest');

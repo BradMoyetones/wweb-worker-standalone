@@ -40,7 +40,7 @@ export function TimezoneSelect({ value, onChange }: TimezoneSelectProps) {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="absolute top-full left-0 right-0 mt-2 z-50"
+                        className="absolute top-full left-0 right-0 mt-2 z-9999"
                     >
                         <Card className="bg-background border-border p-0 max-h-64 overflow-y-auto gap-0">
                             <div className='p-2 bg-background/30 backdrop-blur-lg sticky top-0 rounded-xl border-b'>

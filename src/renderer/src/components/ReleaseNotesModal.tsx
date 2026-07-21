@@ -1,8 +1,12 @@
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { X } from 'lucide-react';
-import MarkdownPreview from '@uiw/react-markdown-preview';
-import { useTheme } from 'next-themes';
+import { Streamdown } from 'streamdown';
+import { code } from '@streamdown/code';
+import { mermaid } from '@streamdown/mermaid';
+import { math } from '@streamdown/math';
+import { cjk } from '@streamdown/cjk';
+import 'katex/dist/katex.min.css';
 
 type ModalProps = {
     open: boolean;
@@ -10,8 +14,7 @@ type ModalProps = {
     version: string;
     notes: string;
 }
-export default function ReleaseNotesModal({open, setOpen, version, notes}: ModalProps) {
-    const { resolvedTheme } = useTheme();
+export default function ReleaseNotesModal({ open, setOpen, version, notes }: ModalProps) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogContent className="max-h-[90vh] h-full max-w-4xl! w-full p-0">
@@ -31,20 +34,17 @@ export default function ReleaseNotesModal({open, setOpen, version, notes}: Modal
                         */}
                     <div
                         className={`
-                                flex-1 
-                                markdown-body 
-                            `}
+                            flex-1 p-4
+                        `}
                     >
-                        <MarkdownPreview
-                            source={notes}
-                            wrapperElement={{
-                                'data-color-mode': resolvedTheme === 'dark' ? 'dark' : 'light',
+                        <Streamdown
+                            plugins={{
+                                code: code,
+                                mermaid: mermaid,
+                                math: math,
+                                cjk: cjk,
                             }}
-                            style={{
-                                padding: '24px',
-                                backgroundColor: 'transparent',
-                            }}
-                        />
+                        >{notes}</Streamdown>
                     </div>
                 </div>
             </DialogContent>

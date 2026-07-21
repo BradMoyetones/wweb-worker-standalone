@@ -3,7 +3,8 @@ import RootLayout from "@/layouts/RootLayout";
 import ErrorBoundary from "./pages/(errors)/ErrorBoundary";
 import NotFound from "./pages/(errors)/NotFound";
 import { lazy } from "react";
-const RootPage = lazy(() => import("./pages/(root)/page"));
+import DetailPage from "./pages/detail/[id]";
+import RootPage from "./pages/(root)/page";
 
 const router = createHashRouter([
     {
@@ -16,6 +17,10 @@ const router = createHashRouter([
             {
                 index: true,
                 element: <RootPage />
+            },
+            {
+                path: "/detail/:id",
+                element: <DetailPage />
             }
         ]
     }

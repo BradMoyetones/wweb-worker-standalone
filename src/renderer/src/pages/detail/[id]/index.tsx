@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -23,25 +23,32 @@ import {
     MessageCircle,
     MessageCircleOff,
 } from 'lucide-react';
-import { TimezoneSelect } from './timezone-select';
+import { TimezoneSelect } from './components/timezone-select';
 import { UpdateCronFormData, updateCronSchema } from '@app/types/crone.types';
 import { useData, useWhatsApp } from '@/contexts';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
-import { KeyValueEditor } from './key-value-editor';
-import { JsonEditor } from './json-editor';
+import { KeyValueEditor } from './components/key-value-editor';
+import { JsonEditor } from './components/json-editor';
 import { mapCronToForm } from '@app/utils/helpers';
-import { DateTimePicker } from './datetime-picker';
+import { DateTimePicker } from './components/datetime-picker';
+import { useNavigate, useParams } from 'react-router';
+import { Spinner } from '@/components/ui/spinner';
 
-interface CronDetailViewProps {
-    cronId: string;
-    onBack: () => void;
-}
+import {
+    Empty,
+    EmptyContent,
+    EmptyDescription,
+    EmptyHeader,
+    EmptyMedia,
+    EmptyTitle,
+} from "@/components/ui/empty"
 
-export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
+export default function DetailPage() {
     const { data, setData } = useData();
+    const { id: cronId } = useParams();
     const cron = data.find((c) => c.id === cronId);
 
     const [isSaving, setIsSaving] = useState(false);
@@ -51,6 +58,7 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
     const [isFocused, setIsFocused] = useState(false);
     const searchBarRef = useRef<HTMLDivElement>(null); // Ref para el div que encierra el input de busqueda
     const { contacts } = useWhatsApp();
+    const navigate = useNavigate()
 
     const form = useForm<UpdateCronFormData>({
         resolver: zodResolver(updateCronSchema),
@@ -84,23 +92,34 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    const onBack = () => {
+        navigate("/", { viewTransition: true });
+    }
+
     if (!cron) {
         return (
-            <div className="min-h-screen bg-linear-to-b from-primary/15 via-transparent to-transparent flex items-center justify-center p-4 rounded-xl">
-                <Card className="bg-card border-border p-6">
-                    <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-4" />
-                    <p className="text-center">Configuración no encontrada</p>
-                    <Button onClick={onBack} className="mt-4 w-full">
-                        Volver
-                    </Button>
-                </Card>
+            <div className="flex items-center justify-center h-full">
+                <Empty>
+                    <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                            <GitBranch />
+                        </EmptyMedia>
+                        <EmptyTitle>Configuración no encontrada</EmptyTitle>
+                        <EmptyDescription>
+                            No se encontro la configuración que buscas.
+                        </EmptyDescription>
+                    </EmptyHeader>
+                    <EmptyContent className="flex-row justify-center gap-2">
+                        <Button onClick={onBack}>Volver</Button>
+                    </EmptyContent>
+                </Empty>
             </div>
         );
     }
 
     const onSubmit = async (data: UpdateCronFormData) => {
         console.log("DATA ENVIADA AL BACKEND", data);
-        
+
         setIsSaving(true);
         // await new Promise((resolve) => setTimeout(resolve, 800));
         toast.promise(window.api.updateCron(cron?.id ?? '', data), {
@@ -116,7 +135,6 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
         });
         console.log('Guardando configuración:', data);
         setIsSaving(false);
-        onBack();
     };
 
     const handleDelete = async (e: React.MouseEvent) => {
@@ -133,7 +151,6 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
         } catch {
             toast.error('Error eliminado Cron');
         } finally {
-            onBack();
         }
     };
 
@@ -143,50 +160,54 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
 
     const steps = form.watch('steps') ?? [];
 
-    return (
-        <div className="min-h-screen bg-linear-to-b from-primary/15 via-transparent to-transparent p-4 md:p-8 rounded-xl">
-            <div className="max-w-3xl mx-auto">
-                {/* Header */}
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="mb-8"
-                >
-                    <div className="flex items-center justify-between gap-4 mb-4">
-                        <Button variant="ghost" onClick={onBack}>
-                            <ArrowLeft className="w-4 h-4" />
-                            Volver
-                        </Button>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="destructive" size={'icon'} onClick={handleDelete}>
-                                    <Trash2 className="w-4 h-4" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Eliminar</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </div>
-                    <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{cron.name}</h1>
-                    <p className="text-muted-foreground mt-2">
-                        {cron.groupName} • Última actualización:{' '}
-                        {new Date(cron.updatedAt)?.toLocaleDateString('es-ES') ?? 'No actualizado'}
-                    </p>
-                </motion.div>
 
-                {/* Form */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.1 }}
-                >
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                            {/* Basic Configuration */}
-                            <Card className="p-6">
-                                <h2 className="text-lg font-semibold mb-4">Información General</h2>
+
+    return (
+        <div>
+            {/* Header */}
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="mb-8"
+            >
+                <div className="flex items-center justify-between gap-4 mb-4">
+                    <Button variant="ghost" onClick={onBack}>
+                        <ArrowLeft />
+                        Volver
+                    </Button>
+                    <Tooltip>
+                        <TooltipTrigger>
+                            <Button variant="destructive" size={'icon'} onClick={handleDelete}>
+                                <Trash2 />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Eliminar</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </div>
+                <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{cron.name}</h1>
+                <p className="text-muted-foreground mt-2">
+                    {cron.groupName} • Última actualización:{' '}
+                    {new Date(cron.updatedAt)?.toLocaleDateString('es-ES') ?? 'No actualizado'}
+                </p>
+            </motion.div>
+
+            {/* Form */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+            >
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        {/* Basic Configuration */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Información General</CardTitle>
+                            </CardHeader>
+                            <CardContent>
                                 <div className="space-y-4">
                                     <FormField
                                         control={form.control}
@@ -275,11 +296,15 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
                                         )}
                                     />
                                 </div>
-                            </Card>
+                            </CardContent>
+                        </Card>
 
-                            {/* Schedule Configuration */}
-                            <Card className="bg-card/30 backdrop-blur border-border/50 p-6 relative z-50">
-                                <h2 className="text-lg font-semibold mb-4">Programación</h2>
+                        {/* Schedule Configuration */}
+                        <Card className="bg-card/30 backdrop-blur border-border/50 relative z-50 overflow-visible">
+                            <CardHeader>
+                                <CardTitle>Programación</CardTitle>
+                            </CardHeader>
+                            <CardContent>
                                 <div className="space-y-4">
                                     <FormField
                                         control={form.control}
@@ -352,25 +377,27 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
                                         Deja vacío para ejecución inmediata (inicio) o indefinida (fin)
                                     </p>
                                 </div>
-                            </Card>
+                            </CardContent>
+                        </Card>
 
-                            {/* Workflow Steps */}
-                            <Tabs defaultValue="view">
-                                <TabsList>
-                                    <TabsTrigger value="view">
-                                        <Eye />
-                                    </TabsTrigger>
-                                    <TabsTrigger value="edit">
-                                        <Edit />
-                                    </TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="view">
-                                    <Card className="bg-card/30 backdrop-blur border-border/50 p-6">
-                                        <div className="flex items-center justify-between">
-                                            <h3 className="text-lg font-semibold flex items-center gap-2">
-                                                <GitBranch className="w-4 h-4" />
-                                                Pasos del Workflow
-                                            </h3>
+                        {/* Workflow Steps */}
+                        <Tabs defaultValue="view">
+                            <TabsList>
+                                <TabsTrigger value="view">
+                                    <Eye />
+                                </TabsTrigger>
+                                <TabsTrigger value="edit">
+                                    <Edit />
+                                </TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="view">
+                                <Card className="bg-card/30 backdrop-blur border-border/50">
+                                    <CardHeader>
+                                        <CardTitle className='flex items-center gap-2'>
+                                            <GitBranch className='size-4' />
+                                            Pasos del Workflow
+                                        </CardTitle>
+                                        <CardAction>
                                             <Button
                                                 type="button"
                                                 size="sm"
@@ -395,7 +422,9 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
                                                 <Plus className="w-3 h-3" />
                                                 Agregar Paso
                                             </Button>
-                                        </div>
+                                        </CardAction>
+                                    </CardHeader>
+                                    <CardContent>
                                         <div className="space-y-2">
                                             {steps.map((step, index) => (
                                                 <motion.div
@@ -494,13 +523,15 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
                                                 </motion.div>
                                             ))}
                                         </div>
-                                    </Card>
-                                </TabsContent>
-                                <TabsContent value="edit">
-                                    <Card className="bg-card/30 backdrop-blur border-border/50 p-6">
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                            <TabsContent value="edit">
+                                <Card className="bg-card/30 backdrop-blur border-border/50">
+                                    <CardContent>
                                         <div className="flex items-center justify-between">
                                             <h3 className="text-lg font-semibold flex items-center gap-2">
-                                                <GitBranch className="w-4 h-4" />
+                                                <GitBranch />
                                                 Pasos del Workflow
                                             </h3>
                                             <Button
@@ -580,14 +611,14 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
                                                                             />
                                                                             {form.formState.errors.steps?.[index]
                                                                                 ?.name && (
-                                                                                <p className="text-xs text-red-500 mt-1">
-                                                                                    {
-                                                                                        form.formState.errors.steps[
-                                                                                            index
-                                                                                        ]?.name?.message
-                                                                                    }
-                                                                                </p>
-                                                                            )}
+                                                                                    <p className="text-xs text-red-500 mt-1">
+                                                                                        {
+                                                                                            form.formState.errors.steps[
+                                                                                                index
+                                                                                            ]?.name?.message
+                                                                                        }
+                                                                                    </p>
+                                                                                )}
                                                                         </div>
 
                                                                         <div>
@@ -659,21 +690,21 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
 
                                                                     {form.watch(`steps.${index}.bodyType`) !==
                                                                         'none' && (
-                                                                        <KeyValueEditor
-                                                                            label="Body (Key-Value)"
-                                                                            value={
-                                                                                form.watch(`steps.${index}.body`) ||
-                                                                                '{}'
-                                                                            }
-                                                                            onChange={(val) =>
-                                                                                form.setValue(
-                                                                                    `steps.${index}.body`,
-                                                                                    val
-                                                                                )
-                                                                            }
-                                                                            placeholder="Agregar parámetros del body"
-                                                                        />
-                                                                    )}
+                                                                            <KeyValueEditor
+                                                                                label="Body (Key-Value)"
+                                                                                value={
+                                                                                    form.watch(`steps.${index}.body`) ||
+                                                                                    '{}'
+                                                                                }
+                                                                                onChange={(val) =>
+                                                                                    form.setValue(
+                                                                                        `steps.${index}.body`,
+                                                                                        val
+                                                                                    )
+                                                                                }
+                                                                                placeholder="Agregar parámetros del body"
+                                                                            />
+                                                                        )}
 
                                                                     <JsonEditor
                                                                         label="Request Options (Opcional)"
@@ -742,12 +773,14 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
                                                 </motion.div>
                                             ))}
                                         </div>
-                                    </Card>
-                                </TabsContent>
-                            </Tabs>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                        </Tabs>
 
-                            {/* Status */}
-                            <Card className="bg-card/30 border-border/50 p-6">
+                        {/* Status */}
+                        <Card className="bg-card/30 border-border/50">
+                            <CardContent>
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <FormLabel className="text-base">Estado</FormLabel>
@@ -767,36 +800,36 @@ export function CronDetailView({ cronId, onBack }: CronDetailViewProps) {
                                         )}
                                     />
                                 </div>
-                            </Card>
+                            </CardContent>
+                        </Card>
 
-                            {/* Actions */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.4, delay: 0.2 }}
-                                className="flex gap-3"
-                            >
-                                <Button type="button" variant="outline" onClick={onBack} disabled={isSaving}>
-                                    Cancelar
-                                </Button>
-                                <Button type="submit" disabled={isSaving} className="gap-2">
-                                    {isSaving ? (
-                                        <>
-                                            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                            Guardando...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save className="w-4 h-4" />
-                                            Guardar Cambios
-                                        </>
-                                    )}
-                                </Button>
-                            </motion.div>
-                        </form>
-                    </Form>
-                </motion.div>
-            </div>
+                        {/* Actions */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: 0.2 }}
+                            className="flex gap-3"
+                        >
+                            <Button type="button" variant="outline" disabled={isSaving} onClick={onBack}>
+                                Cancelar
+                            </Button>
+                            <Button type="submit" disabled={isSaving}>
+                                {isSaving ? (
+                                    <>
+                                        <Spinner />
+                                        Guardando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save />
+                                        Guardar Cambios
+                                    </>
+                                )}
+                            </Button>
+                        </motion.div>
+                    </form>
+                </Form>
+            </motion.div>
         </div>
     );
 }
