@@ -1,6 +1,7 @@
 import { runWorkflow } from './WorkflowEngine';
 import type { CronWithSteps } from '@app/types/crone.types';
 import type { WebContents } from 'electron';
+import { WhatsAppController } from '../controllers/WhatsAppController';
 
 export type EmojisType = {
     [key: string]: string;
@@ -8,7 +9,7 @@ export type EmojisType = {
 
 export class CronExecutor {
     constructor(
-        private whatsappController: any,
+        private whatsappController: WhatsAppController,
         private updateCronFn: (id: string, updates: any) => Promise<any>
     ) {}
 

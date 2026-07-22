@@ -34,6 +34,8 @@ export type FormCronWorkflowStep = z.infer<typeof cronWorkflowStepSchema>;
 
 import { z } from "zod";
 
+export type Status = "running" | "idle" | "error" | "paused";
+
 export const createCronSchema = cronConfigSchema
     .omit({ id: true, createdAt: true, updatedAt: true })
     .extend({

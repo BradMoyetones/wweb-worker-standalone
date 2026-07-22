@@ -1,14 +1,13 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader } from "@/components/ui/sidebar";
 import { WhatsAppStatusModal } from "@/components/WhatsAppStatusModal";
 import { useData, useWhatsApp } from "@/contexts";
 import { cn } from "@/lib/utils";
 import { CreateCronModal } from "@/pages/(root)/components/create-cron-modal";
-import { CronWithSteps } from "@app/types/crone.types";
-import { mapCronToForm } from "@app/utils/helpers";
-import { Download, GitBranch, Home, Pause, Play, Plus, Settings, Trash2, Upload, X } from "lucide-react";
+import { CronWithSteps, Status } from "@app/types/crone.types";
+import { Download, GitBranch, Home, Pause, Play, Plus, ScrollText, Settings, Trash2, Upload, X } from "lucide-react";
 import { AnimatePresence, motion, Variants } from "motion/react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -21,6 +20,7 @@ import {
     EmptyTitle,
 } from "@/components/ui/empty"
 import { useNavigate } from "react-router";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
@@ -81,20 +81,34 @@ export default function AppSidebar() {
                     <div className="flex items-center justify-between gap-2">
                         <h1 className="text-2xl font-bold flex items-center gap-2">WWEBWorker</h1>
                         <div className="flex items-center gap-2">
-                            <Button
-                                variant={"ghost"}
-                                size={"icon"}
-                                onClick={() => navigate('/', { viewTransition: true })}
-                            >
-                                <Home />
-                            </Button>
-                            <Button
-                                variant={"ghost"}
-                                size={"icon"}
-                                onClick={() => navigate('/settings', { viewTransition: true })}
-                            >
-                                <Settings />
-                            </Button>
+                            <Tooltip>
+                                <TooltipTrigger
+                                    className={buttonVariants({
+                                        variant: "ghost",
+                                        size: "icon",
+                                    })}
+                                    onClick={() => navigate('/', { viewTransition: true })}
+                                >
+                                    <Home />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Inicio</p>
+                                </TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger
+                                    className={buttonVariants({
+                                        variant: "ghost",
+                                        size: "icon",
+                                    })}
+                                    onClick={() => navigate('/settings', { viewTransition: true })}
+                                >
+                                    <Settings />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Ajustes</p>
+                                </TooltipContent>
+                            </Tooltip>
                         </div>
                     </div>
                     <Badge variant={"secondary"} onClick={() => setOpenModal(true)} className="cursor-pointer uppercase">{status}</Badge>
@@ -224,12 +238,8 @@ function CronCard({
         if (!wantToggle) return;
 
         setIsSaving(true);
-        let parsedToForm = mapCronToForm(cron);
-        if (!parsedToForm) return;
 
-        parsedToForm = { ...parsedToForm, isActive: !cron.isActive };
-
-        toast.promise(window.api.updateCron(cron?.id ?? '', parsedToForm), {
+        toast.promise(window.api.toggleCron(cron?.id ?? '', !cron.isActive), {
             loading: 'Actualizando...',
             success: (data) => {
                 if (!data) return 'Error: respuesta vacía';
@@ -254,6 +264,19 @@ function CronCard({
             }
         } catch { toast.error('Error'); }
     };
+
+    const cronStatus = useMemo(() => {
+        switch (cron.status as Status) {
+            case 'running':
+                return 'default';
+            case 'idle':
+                return 'secondary';
+            case 'error':
+                return 'destructive';
+            default:
+                return 'outline';
+        }
+    }, [cron.status]);
 
     return (
         <motion.div
@@ -284,6 +307,9 @@ function CronCard({
                                     <div className="flex items-center gap-3">
                                         <h3 className="text-md font-semibold">{cron.name}</h3>
                                         <div className={`w-2 h-2 rounded-full ${cron.isActive ? 'bg-emerald-500 animate-pulse' : 'bg-muted-foreground'}`} />
+                                        <Badge variant={cronStatus}>
+                                            {cron.status}
+                                        </Badge>
                                     </div>
                                     <div className="text-xs text-muted-foreground mt-1 flex items-center gap-3">
                                         <span>{cron.groupName}</span>
@@ -293,15 +319,69 @@ function CronCard({
                             </div>
 
                             <div className="flex items-center gap-1 justify-end">
-                                <Button variant="ghost" size="icon" onClick={handleSingleExport} title="Exportar este cron">
-                                    <Download />
-                                </Button>
-                                <Button variant="ghost" size="icon" onClick={handleToggle} disabled={isSaving}>
-                                    {cron.isActive ? <Pause /> : <Play />}
-                                </Button>
-                                <Button variant="destructive" size="icon" onClick={handleDelete}>
-                                    <Trash2 />
-                                </Button>
+                                <Tooltip>
+                                    <TooltipTrigger
+                                        className={buttonVariants({
+                                            variant: "secondary",
+                                            size: "icon",
+                                        })}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate(`/detail/${cron.id}/describe`, { viewTransition: true })
+                                        }}
+                                    >
+                                        <ScrollText />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Describe</p>
+                                    </TooltipContent>
+                                </Tooltip>
+
+                                <Tooltip>
+                                    <TooltipTrigger
+                                        className={buttonVariants({
+                                            variant: "ghost",
+                                            size: "icon",
+                                        })}
+                                        onClick={handleSingleExport}
+                                    >
+                                        <Download />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Exportar este cron</p>
+                                    </TooltipContent>
+                                </Tooltip>
+
+                                <Tooltip>
+                                    <TooltipTrigger
+                                        className={buttonVariants({
+                                            variant: "ghost",
+                                            size: "icon",
+                                        })}
+                                        onClick={handleToggle}
+                                        disabled={isSaving}
+                                    >
+                                        {cron.isActive ? <Pause /> : <Play />}
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{cron.isActive ? 'Pausar' : 'Activar'}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+
+                                <Tooltip>
+                                    <TooltipTrigger
+                                        className={buttonVariants({
+                                            variant: "destructive",
+                                            size: "icon",
+                                        })}
+                                        onClick={handleDelete}
+                                    >
+                                        <Trash2 />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Eliminar</p>
+                                    </TooltipContent>
+                                </Tooltip>
                             </div>
                         </div>
                     </div>

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -24,7 +24,7 @@ import {
     MessageCircleOff,
 } from 'lucide-react';
 import { TimezoneSelect } from './components/timezone-select';
-import { UpdateCronFormData, updateCronSchema } from '@app/types/crone.types';
+import { CronWithSteps, UpdateCronFormData, updateCronSchema } from '@app/types/crone.types';
 import { useData, useWhatsApp } from '@/contexts';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -49,7 +49,7 @@ import {
 export default function DetailPage() {
     const { data, setData } = useData();
     const { id: cronId } = useParams();
-    const cron = data.find((c) => c.id === cronId);
+    const [cron, setCron] = useState<CronWithSteps | undefined>();
 
     const [isSaving, setIsSaving] = useState(false);
     const [expandedSteps, setExpandedSteps] = useState<number[]>([]);
@@ -79,6 +79,20 @@ export default function DetailPage() {
         control: form.control,
         name: 'steps',
     });
+
+    useEffect(() => {
+        if (!cronId) return;
+        const foundCron = data.find((c) => c.id === cronId);
+        setCron(foundCron);
+    }, [data, cronId]);
+
+    useEffect(() => {
+        if (!cron) {
+            form.reset();
+            return;
+        }
+        form.reset(mapCronToForm(cron));
+    }, [cron]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -177,10 +191,8 @@ export default function DetailPage() {
                         Volver
                     </Button>
                     <Tooltip>
-                        <TooltipTrigger>
-                            <Button variant="destructive" size={'icon'} onClick={handleDelete}>
-                                <Trash2 />
-                            </Button>
+                        <TooltipTrigger className={buttonVariants({ variant: "destructive", size: "icon" })} onClick={handleDelete}>
+                            <Trash2 />
                         </TooltipTrigger>
                         <TooltipContent>
                             <p>Eliminar</p>
@@ -203,7 +215,7 @@ export default function DetailPage() {
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                         {/* Basic Configuration */}
-                        <Card>
+                        <Card className='overflow-visible'>
                             <CardHeader>
                                 <CardTitle>Información General</CardTitle>
                             </CardHeader>
@@ -223,9 +235,13 @@ export default function DetailPage() {
                                                     <FormControl>
                                                         <div ref={searchBarRef} className="relative flex-1">
                                                             <Input
-                                                                onFocus={() => setIsFocused(true)}
-                                                                placeholder="ej: PJD SERVICIO Y EVENTOS"
                                                                 {...field}
+                                                                placeholder="ej: PJD SERVICIO Y EVENTOS"
+                                                                onFocus={() => setIsFocused(true)}
+                                                                value={field.value ?? ''}
+                                                                onChange={(e) => {
+                                                                    field.onChange(e.target.value);
+                                                                }}
                                                             />
                                                             {isFocused && (
                                                                 <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-lg overflow-y-auto z-9999 max-h-96">
@@ -275,7 +291,14 @@ export default function DetailPage() {
                                             <FormItem>
                                                 <FormLabel>Nombre Descriptivo</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Ej: Contador de Visitantes" {...field} />
+                                                    <Input 
+                                                        placeholder="Ej: Contador de Visitantes" 
+                                                        {...field}
+                                                        value={field.value ?? ''}
+                                                        onChange={(e) => {
+                                                            field.onChange(e.target.value);
+                                                        }}
+                                                    />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -289,7 +312,14 @@ export default function DetailPage() {
                                             <FormItem>
                                                 <FormLabel>Descripción</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Descripción del workflow" {...field} />
+                                                    <Input 
+                                                        placeholder="Descripción del workflow" 
+                                                        {...field} 
+                                                        value={field.value ?? ''}
+                                                        onChange={(e) => {
+                                                            field.onChange(e.target.value);
+                                                        }}
+                                                    />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -317,6 +347,10 @@ export default function DetailPage() {
                                                         placeholder="0 0 * * *"
                                                         {...field}
                                                         className="font-mono text-xs"
+                                                        value={field.value ?? ''}
+                                                        onChange={(e) => {
+                                                            field.onChange(e.target.value);
+                                                        }}
                                                     />
                                                 </FormControl>
                                                 <FormDescription>Minuto Hora Día Mes Día-semana</FormDescription>

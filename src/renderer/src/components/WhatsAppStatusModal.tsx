@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader, EllipsisVertical, Settings, AlertCircle, CheckCircle } from 'lucide-react';
 import { Timeline } from '@/components/timeline';
@@ -10,42 +10,6 @@ import { WhatsAppContext } from '@/contexts';
 import { Card, CardContent } from './ui/card';
 import { cn } from '@/lib/utils';
 import { useContext } from 'react';
-
-// Pasos para el QR (los saqué de tu código original)
-const whatsappSteps = [
-    {
-        number: 1,
-        description: <p className="text-lg">Abre WhatsApp en tu teléfono 📲</p>,
-    },
-    {
-        number: 2,
-        description: (
-            <p className="text-lg flex">
-                En Android, toca <strong>&nbsp;Menú</strong>{' '}
-                <Badge variant={'secondary'} className="px-0.5 ml-2">
-                    <EllipsisVertical className="size-4!" />
-                </Badge>
-                . En iPhone, toca <strong>&nbsp;Ajustes</strong>{' '}
-                <Badge variant={'secondary'} className="px-0.5 ml-2">
-                    <Settings className="size-4!" />
-                </Badge>
-                .
-            </p>
-        ),
-    },
-    {
-        number: 3,
-        description: (
-            <p className="text-lg">
-                Toca <strong> Dispositivos vinculados </strong> y, luego, <strong> Vincular dispositivo.</strong>
-            </p>
-        ),
-    },
-    {
-        number: 4,
-        description: <p className="text-lg">Escanea el código QR para confirmar.</p>,
-    },
-];
 
 interface WhatsAppStatusModalProps {
     open?: boolean;
@@ -92,10 +56,8 @@ export function WhatsAppStatusModal({ open, setOpen }: WhatsAppStatusModalProps)
                                                 Ahora puedes crear flujos que utilicen WhatsApp.
                                             </p>
                                             <div className="flex items-center justify-center gap-2 mt-4">
-                                                <DialogTrigger className={"w-full"}>
-                                                    <Button variant="outline" onClick={() => setOpen?.(false)} className="w-full">
-                                                        Cerrar
-                                                    </Button>
+                                                <DialogTrigger className={buttonVariants({ variant: "outline" })} onClick={() => setOpen?.(false)}>
+                                                    Cerrar
                                                 </DialogTrigger>
                                             </div>
                                         </div>
@@ -135,12 +97,9 @@ export function WhatsAppStatusModal({ open, setOpen }: WhatsAppStatusModalProps)
                             <div className="flex items-center justify-center h-full">
                                 <Card className="max-w-4xl w-full mx-4">
                                     <CardContent className="pt-6">
-                                        <div className="flex flex-col md:flex-row justify-between gap-6">
+                                        <div className="flex flex-col gap-6">
                                             <div className="flex-1">
-                                                <h1 className="text-3xl font-bold">Pasos para iniciar sesión</h1>
-                                                <div className="mt-10">
-                                                    <Timeline steps={whatsappSteps} />
-                                                </div>
+                                                <h1 className="text-2xl font-bold">Escanea el código QR para iniciar sesión</h1>
                                             </div>
                                             <div className="flex justify-center md:justify-end">
                                                 <div className="aspect-square h-71 flex items-center justify-center bg-muted rounded-xl overflow-hidden my-auto">

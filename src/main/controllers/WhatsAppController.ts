@@ -165,25 +165,9 @@ export class WhatsAppController extends EventEmitter {
             if (!this.client) return;
             try {
                 const rawContacts = await this.client.getContacts();
-                const seenIds = new Set();
+                const cleanContacts = this.cleanContacts(rawContacts);
 
-                this.state.contacts = rawContacts.filter((contact) => {
-                    const id = contact.id._serialized;
-
-                    if (seenIds.has(id)) return false;
-
-                    if (contact.isGroup) {
-                        seenIds.add(id);
-                        return true;
-                    }
-
-                    if (contact.isUser && contact.isMyContact) {
-                        seenIds.add(id);
-                        return true;
-                    }
-
-                    return false;
-                });
+                this.state.contacts = cleanContacts
                 this.emit('whatsapp-contacts', this.state.contacts, webContents);
             } catch (err) {
                 console.log('[WhatsApp] Could not get contacts');
@@ -201,6 +185,28 @@ export class WhatsAppController extends EventEmitter {
             console.log('[WhatsApp] Disconnected:', reason);
             this.updateState({ status: 'disconnected', error: reason });
             this.emit('whatsapp-status', this.state, webContents);
+        });
+    }
+
+    private cleanContacts(rawContacts: Contact[]): Contact[] {
+        const seenIds = new Set();
+
+        return rawContacts.filter((contact) => {
+            const id = contact.id._serialized;
+
+            if (seenIds.has(id)) return false;
+
+            if (contact.isGroup) {
+                seenIds.add(id);
+                return true;
+            }
+
+            if (contact.isUser && contact.isMyContact) {
+                seenIds.add(id);
+                return true;
+            }
+
+            return false;
         });
     }
 
@@ -227,7 +233,7 @@ export class WhatsAppController extends EventEmitter {
         }
 
         try {
-            contacts = await this.client.getContacts();
+            contacts = this.cleanContacts(await this.client.getContacts());
         } catch (err) {
             console.log('[WhatsApp] Could not get contacts');
         }
@@ -294,14 +300,14 @@ export class WhatsAppController extends EventEmitter {
             throw new Error('WhatsApp client is not initialized');
         }
 
-        const chats = await this.client.getChats();
-        const group = chats.find((c) => c.isGroup && c.name === name);
+        const contacts = await this.client.getContacts();
+        const chat = contacts.find((c) => c.name === name);
 
-        if (!group) {
-            throw new Error(`Group not found: ${name}`);
+        if (!chat) {
+            throw new Error(`Chat not found: ${name}`);
         }
 
-        return group.id._serialized;
+        return chat.id._serialized;
     }
 
     async sendToGroupByName(groupName: string, message: string): Promise<void> {

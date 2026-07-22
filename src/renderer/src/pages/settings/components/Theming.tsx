@@ -1,5 +1,4 @@
 import { AnimatedThemeToggler } from '@/components/animated-theme-toggler';
-import { ThemeSelector } from '@/components/theme-selector';
 
 export default function Theming() {
     return (
@@ -9,11 +8,7 @@ export default function Theming() {
                 <div className="flex items-center justify-between px-3 py-2 rounded-md transition-colors">
                     <span className="text-sm">Tema</span>
                     <AnimatedThemeToggler variant={"ghost"} size={"icon"} />
-                </div>
-                <div className="flex items-center justify-between px-3 py-2 rounded-md transition-colors">
-                    <span className="text-sm">Color</span>
-                    <ThemeSelector />
-                </div>
+                </div>                
             </div>
         </div>
     );

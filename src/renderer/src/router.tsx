@@ -5,6 +5,7 @@ import NotFound from "./pages/(errors)/NotFound";
 import DetailPage from "./pages/detail/[id]";
 import RootPage from "./pages/(root)/page";
 import SettingsPage from "./pages/settings";
+import DescribePage from "./pages/detail/[id]/describe";
 
 const router = createHashRouter([
     {
@@ -20,7 +21,16 @@ const router = createHashRouter([
             },
             {
                 path: "/detail/:id",
-                element: <DetailPage />
+                children: [
+                    {
+                        index: true,
+                        element: <DetailPage />
+                    },
+                    {
+                        path: "describe",
+                        element: <DescribePage />
+                    },
+                ]
             },
             {
                 path: "/settings",

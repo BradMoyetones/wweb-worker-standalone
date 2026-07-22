@@ -22,7 +22,7 @@ export class DatabaseController extends EventEmitter {
         this.cronExecutor = new CronExecutor(this.whatsappController, async (id, updates) => {
             const cron = await findCronById(id);
             if (!cron) return null;
-            return await updateCron(id, { ...mapCronToForm(cron), ...updates });
+            return await this.updateCron(id, { ...mapCronToForm(cron), ...updates });
         });
 
         setCronExecutor(this.cronExecutor);
@@ -81,6 +81,7 @@ export class DatabaseController extends EventEmitter {
         const updated = await updateCron(id, {
             ...mapCronToForm(cron)!,
             isActive: isActive,
+            status: isActive ? 'running' : 'paused',
         });
 
         if (!updated) return null;

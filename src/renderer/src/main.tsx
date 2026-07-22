@@ -14,25 +14,28 @@ import { DataProvider, WhatsAppProvider } from './contexts';
 import { Toaster } from './components/ui/sonner';
 import { ThemeProvider as NextThemesProvider } from "next-themes"
 import { ConsoleTerminal } from './components/ConsoleTerminal';
+import { TooltipProvider } from './components/ui/tooltip';
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <NextThemesProvider 
+    <NextThemesProvider
       attribute="class"
       defaultTheme="system"
       enableSystem
       disableTransitionOnChange
     >
-      <VersionProvider>
-        <WhatsAppProvider>
-          <ActiveThemeProvider>
-            <DataProvider>
-              <RouterProvider router={router} />
-            </DataProvider>
-          </ActiveThemeProvider>
-        </WhatsAppProvider>
-      </VersionProvider>
-      <Toaster />
-      <ConsoleTerminal />
+      <TooltipProvider delay={0}>
+        <VersionProvider>
+          <WhatsAppProvider>
+            <ActiveThemeProvider>
+              <DataProvider>
+                <RouterProvider router={router} />
+              </DataProvider>
+            </ActiveThemeProvider>
+          </WhatsAppProvider>
+        </VersionProvider>
+        <Toaster />
+        <ConsoleTerminal />
+      </TooltipProvider>
     </NextThemesProvider>
   </StrictMode>
 )

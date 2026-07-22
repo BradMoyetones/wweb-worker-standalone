@@ -32,7 +32,7 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
 
     const [isFocused, setIsFocused] = useState(false);
     const searchBarRef = useRef<HTMLDivElement>(null); // Ref para el div que encierra el input de busqueda
-    const { chats } = useWhatsApp();
+    const { contacts } = useWhatsApp();
 
     const form = useForm<CreateCronFormData>({
         resolver: zodResolver(createCronSchema),
@@ -125,9 +125,9 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
                                         control={form.control}
                                         name="groupName"
                                         render={({ field }) => {
-                                            const filteredChats = chats.filter((chat) =>
+                                            const filteredChats = contacts.filter((chat) =>
                                                 chat.name
-                                                    .toLowerCase()
+                                                    ?.toLowerCase()
                                                     .includes((field.value ?? '').toLowerCase())
                                             );
 
@@ -137,9 +137,10 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
                                                     <FormControl>
                                                         <div ref={searchBarRef} className="relative flex-1">
                                                             <Input
+                                                                {...field}
                                                                 onFocus={() => setIsFocused(true)}
                                                                 placeholder="ej: PJD SERVICIO Y EVENTOS"
-                                                                {...field}
+                                                                value={field.value || ''}
                                                             />
                                                             {isFocused && (
                                                                 <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-lg overflow-y-auto z-50 max-h-96">
@@ -157,9 +158,9 @@ export function CreateCronModal({ isOpen, onClose }: CreateCronModalProps) {
                                                                                 >
                                                                                     <button
                                                                                         type="button"
-                                                                                        onClick={() => {
+                                                                                        onClick={(e) => {
                                                                                             field.onChange(
-                                                                                                chat.name
+                                                                                                chat.name || ''
                                                                                             );
                                                                                             setIsFocused(false);
                                                                                         }}
