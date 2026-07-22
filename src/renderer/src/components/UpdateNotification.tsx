@@ -7,6 +7,7 @@ import { Download, X, FileText } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import type { UpdateInfo, ProgressInfo } from 'electron-updater';
 import ReleaseNotesModal from './ReleaseNotesModal';
+import { Spinner } from './ui/spinner';
 
 export function UpdateNotification() {
     const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
@@ -14,6 +15,7 @@ export function UpdateNotification() {
     const [isDownloaded, setIsDownloaded] = useState(false);
     const [showReleaseNotes, setShowReleaseNotes] = useState(false);
     const [dismissed, setDismissed] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);
 
     useEffect(() => {
         window.api.onUpdateAvailable((info) => {
@@ -38,8 +40,9 @@ export function UpdateNotification() {
         };
     }, []);
 
-    const handleUpdateNow = () => {
-        window.api.restartApp();
+    const handleUpdateNow = async () => {
+        setIsUpdating(true);
+        await window.api.restartApp();
     };
 
     const handleLater = () => {
@@ -94,8 +97,17 @@ export function UpdateNotification() {
                         <div className="flex gap-2">
                             {isDownloaded ? (
                                 <>
-                                    <Button onClick={handleUpdateNow} size="sm" className="flex-1">
-                                        Update Now
+                                    <Button onClick={handleUpdateNow} disabled={isUpdating} size="sm" className="flex-1">
+                                        {
+                                            isUpdating ? (
+                                                <>
+                                                    <Spinner />
+                                                    <span>Updating...</span>
+                                                </>
+                                            ) : (
+                                                'Update Now'
+                                            )
+                                        }
                                     </Button>
                                     <Button
                                         onClick={handleLater}
